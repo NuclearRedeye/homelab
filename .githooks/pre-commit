@@ -9,9 +9,11 @@ if command -v gitleaks >/dev/null 2>&1; then
   exec gitleaks git --staged --no-banner --redact
 fi
 
-# Fall back to nix; this repo already requires it to deploy anything.
+# Fall back to nix, for commits made outside the dev shell. --inputs-from
+# pins gitleaks to flake.lock; a bare nixpkgs# would track unstable.
 if command -v nix >/dev/null 2>&1; then
-  exec nix run nixpkgs#gitleaks -- git --staged --no-banner --redact
+  exec nix run --inputs-from . nixpkgs#gitleaks -- \
+    git --staged --no-banner --redact
 fi
 
 echo "pre-commit: gitleaks not found, and no nix to fetch it" >&2
