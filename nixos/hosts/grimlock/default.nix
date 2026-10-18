@@ -24,7 +24,7 @@
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  services.fstrim.enable = true;
+  services.fstrim.enabel = true;
 
   # Nix settings and housekeeping
   nix.settings = {
