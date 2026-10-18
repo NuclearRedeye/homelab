@@ -1,0 +1,7 @@
+# Never commit credentials or local overrides
+.env*
+.password
+
+# Archives and OS cruft
+*.tar.gz
+.DS_Store
