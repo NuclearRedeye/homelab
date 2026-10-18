@@ -1,7 +1,8 @@
 name: Renovate
 
-# Monday morning rather than overnight, so an automerged lock update is
-# visible for a day before autoUpgrade deploys it at 04:40 the next morning.
+# Monday morning rather than overnight, so the PRs are waiting at the start of
+# the week rather than sitting unreviewed over a weekend. Nothing automerges;
+# every PR is merged by hand.
 on:
   schedule:
     - cron: "0 8 * * 1"
