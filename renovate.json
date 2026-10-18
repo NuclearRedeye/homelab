@@ -4,10 +4,11 @@
   "timezone": "Europe/London",
   "dependencyDashboard": true,
 
-  "description": "No hourly rate limit. That default guards against a flood on busy repos; this one runs weekly, so it cannot flood, and the limit only delays an update by a week waiting its turn. prConcurrentLimit stays at its default of 10, which is the bound that actually matters.",
+  "description": [
+    "No hourly rate limit. That default guards against a flood on busy repos; this one runs weekly, so it cannot flood, and the limit only delays an update by a week waiting its turn. prConcurrentLimit stays at its default of 10, which is the bound that actually matters.",
+    "Renovate's default gitAuthor is Mend-owned. Setting it keeps the commits attributable, and Renovate needs it to recognise its own branches as unmodified."
+  ],
   "prHourlyLimit": 0,
-
-  "description": "Renovate's default gitAuthor is Mend-owned. Setting it keeps the commits attributable, and Renovate needs it to recognise its own branches as unmodified.",
   "gitAuthor": "Renovate Bot <renovate@mneah.com>",
 
   "nix": {
