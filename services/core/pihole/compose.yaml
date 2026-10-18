@@ -1,0 +1,30 @@
+name: ${NAME}
+services:
+  pihole:
+    image: pihole/pihole:2026.07.2
+    container_name: ${COMPOSE_PROJECT_NAME}
+    restart: unless-stopped
+    environment:
+      - FTLCONF_dns_upstreams=${UPSTREAMS}
+      - FTLCONF_dns_listeningMode=ALL
+      - WEBPASSWORD_FILE=pihole_admin_password
+      - FTLCONF_dns_revServers=true,${REV_CIDR},${ROUTER_IP},dollafield.com;true,${REV_CIDR},${ROUTER_IP},mneah.com;true,${REV_CIDR},${ROUTER_IP},getoverit.uk
+    volumes:
+      - '/etc/timezone:/etc/timezone:ro'
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${BASE}/${NAME}/config:/etc/pihole:rw'
+    secrets:
+      - pihole_admin_password
+    networks:
+      lan:
+        ipv4_address: ${IP}
+        mac_address: ${MAC}
+
+secrets:
+  pihole_admin_password:
+    file: ${PASSWORD_FILE}
+
+networks:
+  lan:
+    external: true
+    name: ${NETWORK}
