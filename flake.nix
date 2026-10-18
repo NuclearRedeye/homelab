@@ -18,14 +18,30 @@
     };
   };
 
-  outputs = { self, nixpkgs, disko, sops-nix, ... }: {
-    nixosConfigurations.grimlock = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        disko.nixosModules.disko
-        sops-nix.nixosModules.sops
-        ./nixos/hosts/grimlock
-      ];
+  outputs = { self, nixpkgs, disko, sops-nix, ... }:
+    let
+      # Systems the dev shell is offered on; add x86_64-linux to deploy
+      # from something other than the Mac.
+      forEachSystem = nixpkgs.lib.genAttrs [ "aarch64-darwin" ];
+    in
+    {
+      nixosConfigurations.grimlock = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          disko.nixosModules.disko
+          sops-nix.nixosModules.sops
+          ./nixos/hosts/grimlock
+        ];
+      };
+
+      # Everything needed to deploy this flake and edit its secrets,
+      # versioned by flake.lock rather than by whatever is on PATH.
+      devShells = forEachSystem (system:
+        let pkgs = nixpkgs.legacyPackages.${system};
+        in {
+          default = pkgs.mkShellNoCC {
+            packages = with pkgs; [ nixos-rebuild sops age ssh-to-age gitleaks ];
+          };
+        });
     };
-  };
 }
