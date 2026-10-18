@@ -1,0 +1,11 @@
+keys:
+  - &admin age14h7wk9623cjgfvzx7lglztuwfftjmkufgmte88qs3rddmcw9aekqzav60f
+  - &grimlock age18r4hvmudxpmuaxsgteyuyqpcnqrgrv5xwne2yagughnfgssm29mshvt3us
+
+creation_rules:
+  # Every secret is decrypted on grimlock at activation and edited by admin.
+  - path_regex: ^secrets/
+    key_groups:
+      - age:
+          - *admin
+          - *grimlock

@@ -1,12 +1,10 @@
 { config, lib, pkgs, ... }:
 let
-  # Host-specific network facts. At the VLAN 11 cutover, change these
-  # (and the IP lines in the env files), then redeploy.
+  # Only the facts Nix needs at evaluation time. The subnet and gateway are
+  # read from /run/secrets/pihole-net at runtime so they stay out of the store.
   lan = {
     name = "dns-lan";
     parent = "enp0s25";
-    subnet = "192.168.11.0/24";
-    gateway = "192.168.11.1";
   };
 
   # The stack definition lives in the repo, outside the NixOS config.
@@ -16,11 +14,13 @@ let
   docker = config.virtualisation.docker.package;
   compose = "${docker}/bin/docker compose -f ${stackDir}/compose.yaml";
 
-  # One entry per Pi-hole instance. Each needs .env.<name> in the stack dir.
+  # One entry per Pi-hole instance. Each needs a pihole-env-<name> secret.
   instances = [ "trusted" "restricted" ];
 
+  envFile = name: config.sops.secrets."pihole-env-${name}".path;
+
   mkInstance = name:
-    let up = "${compose} --env-file ${stackDir}/.env.${name} up -d";
+    let up = "${compose} --env-file ${envFile name} up -d";
     in lib.nameValuePair "pihole-${name}" {
       description = "Pi-hole (${name})";
       requires = [ "docker.service" "docker-network-dns-lan.service" ];
@@ -33,7 +33,7 @@ let
         TimeoutStartSec = "5min";
         ExecStart = up;
         ExecReload = up;
-        ExecStop = "${compose} --env-file ${stackDir}/.env.${name} down";
+        ExecStop = "${compose} --env-file ${envFile name} down";
       };
     };
 in
@@ -60,12 +60,16 @@ in
         RemainAfterExit = true;
       };
       script = ''
+        set -a
+        . ${config.sops.secrets."pihole-net".path}
+        set +a
+
         have=$(docker network inspect ${lan.name} \
           --format '{{(index .IPAM.Config 0).Subnet}}' 2>/dev/null || true)
-        if [ "$have" != "${lan.subnet}" ]; then
+        if [ "$have" != "$SUBNET" ]; then
           docker network rm ${lan.name} 2>/dev/null || true
           docker network create -d macvlan \
-            --subnet=${lan.subnet} --gateway=${lan.gateway} \
+            --subnet="$SUBNET" --gateway="$GATEWAY" \
             -o parent=${lan.parent} ${lan.name}
         fi
       '';

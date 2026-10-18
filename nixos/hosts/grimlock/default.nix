@@ -69,7 +69,29 @@
   sops = {
     defaultSopsFile = ../../../secrets/grimlock.yaml;
     age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
-    secrets.pihole_admin_password = { };
+
+    secrets = {
+      pihole_admin_password.reloadUnits = [ "pihole-trusted.service" "pihole-restricted.service" ];
+
+      # Whole-file secrets: written out verbatim and consumed as env files.
+      "pihole-env-trusted" = {
+        format = "binary";
+        sopsFile = ../../../secrets/pihole-env-trusted;
+        reloadUnits = [ "pihole-trusted.service" ];
+      };
+
+      "pihole-env-restricted" = {
+        format = "binary";
+        sopsFile = ../../../secrets/pihole-env-restricted;
+        reloadUnits = [ "pihole-restricted.service" ];
+      };
+
+      "pihole-net" = {
+        format = "binary";
+        sopsFile = ../../../secrets/pihole-net;
+        restartUnits = [ "docker-network-dns-lan.service" ];
+      };
+    };
   };
 
   users.motd = "grimlock: managed by the homelab flake";
