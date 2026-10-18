@@ -25,7 +25,3 @@ jobs:
           token: ${{ secrets.RENOVATE_TOKEN }}
         env:
           RENOVATE_REPOSITORIES: ${{ github.repository }}
-          # Remove these two lines to go live. Until then Renovate reports
-          # what it would do without creating a branch or a PR.
-          RENOVATE_DRY_RUN: full
-          LOG_LEVEL: debug
