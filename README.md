@@ -62,3 +62,7 @@ sops --decrypt secrets/pihole-net
 ```
 
 Files under `secrets/` with no extension are whole-file secrets, written out verbatim.
+
+## License
+
+Licensed under [MIT](https://choosealicense.com/licenses/mit/).
