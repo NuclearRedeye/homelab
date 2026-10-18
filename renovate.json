@@ -12,9 +12,9 @@
   },
 
   "lockFileMaintenance": {
-    "description": "Refreshes flake.lock. nixpkgs tracks nixos-26.05, so these are security backports, and the closure build in CI is a strong signal for them. The schedule override is required: the preset carries a built-in 'before 4am on monday' that otherwise silently suppresses the PR.",
+    "description": "Refreshes flake.lock. nixpkgs tracks nixos-26.05, so these are security backports, and the closure build in CI is a strong signal for them. Merged by hand for now, until the review pattern is established. The schedule override is required: the preset carries a built-in 'before 4am on monday' that otherwise silently suppresses the PR.",
     "enabled": true,
-    "automerge": true,
+    "automerge": false,
     "schedule": ["at any time"]
   },
 
