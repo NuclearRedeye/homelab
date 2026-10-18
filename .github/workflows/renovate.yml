@@ -1,0 +1,30 @@
+name: Renovate
+
+# Monday morning rather than overnight, so an automerged lock update is
+# visible for a day before autoUpgrade deploys it at 04:40 the next morning.
+on:
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renovate
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: renovatebot/github-action@v46.3.8
+        with:
+          token: ${{ secrets.RENOVATE_TOKEN }}
+        env:
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          # Remove these two lines to go live. Until then Renovate reports
+          # what it would do without creating a branch or a PR.
+          RENOVATE_DRY_RUN: full
+          LOG_LEVEL: debug

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/London",
+  "dependencyDashboard": true,
+
+  "description": "Renovate's default gitAuthor is Mend-owned. Setting it keeps the commits attributable, and Renovate needs it to recognise its own branches as unmodified.",
+  "gitAuthor": "Renovate Bot <renovate@mneah.com>",
+
+  "nix": {
+    "enabled": true
+  },
+
+  "lockFileMaintenance": {
+    "description": "Refreshes flake.lock. nixpkgs tracks nixos-26.05, so these are security backports, and the closure build in CI is a strong signal for them. The schedule override is required: the preset carries a built-in 'before 4am on monday' that otherwise silently suppresses the PR.",
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["at any time"]
+  },
+
+  "packageRules": [
+    {
+      "description": "Pin to immutable digests. Excludes the nix manager: flake inputs are already pinned by flake.lock, so rewriting flake.nix fails.",
+      "matchManagers": ["docker-compose", "github-actions"],
+      "pinDigests": true
+    },
+    {
+      "description": "Image bumps are reviewed by hand. The tag is an opaque string to Nix, so a green closure build proves nothing about it.",
+      "matchManagers": ["docker-compose"],
+      "automerge": false
+    },
+    {
+      "description": "Pi-hole tags are calver (2026.07.2); strict semver rejects the leading zero in the month.",
+      "matchPackageNames": ["pihole/pihole"],
+      "versioning": "loose"
+    }
+  ]
+}
