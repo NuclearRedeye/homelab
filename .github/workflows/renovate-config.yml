@@ -43,3 +43,24 @@ jobs:
       # in renovate.yml is for.
       - name: Validate renovate.json
         run: nix shell --inputs-from . nixpkgs#renovate --command renovate-config-validator
+
+      # renovate-config-validator does not reject duplicate keys, and neither
+      # does a plain JSON parse: both silently keep the last value. Renovate
+      # itself does reject them, by opening a "Fix Renovate Configuration"
+      # issue and refusing to raise any PR until it is resolved.
+      - name: Reject duplicate keys in renovate.json
+        run: |
+          python3 - <<'EOF'
+          import collections, json, sys
+
+          def no_duplicates(pairs):
+              counts = collections.Counter(key for key, _ in pairs)
+              repeated = sorted(key for key, n in counts.items() if n > 1)
+              if repeated:
+                  sys.exit(f"duplicate keys in renovate.json: {repeated}")
+              return dict(pairs)
+
+          with open("renovate.json") as handle:
+              json.load(handle, object_pairs_hook=no_duplicates)
+          print("no duplicate keys")
+          EOF
