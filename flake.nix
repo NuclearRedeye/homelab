@@ -20,9 +20,8 @@
 
   outputs = { self, nixpkgs, disko, sops-nix, ... }:
     let
-      # Systems the dev shell is offered on; add x86_64-linux to deploy
-      # from something other than the Mac.
-      forEachSystem = nixpkgs.lib.genAttrs [ "aarch64-darwin" ];
+      # Systems the dev shell is offered on.
+      forEachSystem = nixpkgs.lib.genAttrs [ "aarch64-darwin" "x86_64-linux" ];
     in
     {
       nixosConfigurations.grimlock = nixpkgs.lib.nixosSystem {
