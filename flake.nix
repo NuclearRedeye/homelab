@@ -40,6 +40,14 @@
         in {
           default = pkgs.mkShellNoCC {
             packages = with pkgs; [ nixos-rebuild sops age ssh-to-age gitleaks ];
+
+            # nixos-rebuild budgets its ssh ControlPath against Linux's
+            # 107-byte socket limit, but darwin's is 103. A nix shell TMPDIR
+            # is 44 bytes, which passes its check and still overflows ssh,
+            # so shorten it past the gap.
+            shellHook = nixpkgs.lib.optionalString pkgs.stdenv.isDarwin ''
+              export TMPDIR=/tmp
+            '';
           };
         });
     };
