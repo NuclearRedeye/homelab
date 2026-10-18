@@ -1,0 +1,45 @@
+name: Renovate config
+
+# Scoped to the renovate files: the validator is a 650 MiB closure, and
+# nothing outside these paths can invalidate the config. The lists are
+# duplicated because GitHub Actions does not support YAML anchors.
+on:
+  pull_request:
+    paths:
+      - renovate.json
+      - .github/workflows/renovate.yml
+      - .github/workflows/renovate-config.yml
+  push:
+    branches: [main]
+    paths:
+      - renovate.json
+      - .github/workflows/renovate.yml
+      - .github/workflows/renovate-config.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renovate-config-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Deliberately not a required check on main. A path-filtered workflow never
+  # reports on the PRs it skips, so requiring it would leave every PR that
+  # doesn't touch these files permanently blocked.
+  renovate-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: cachix/install-nix-action@v31.11.1
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      # --inputs-from pins the validator to this flake's nixpkgs, so CI and
+      # a local run agree on the version. Catches unknown options and wrong
+      # types; it does not catch preset semantics, which is what the dry run
+      # in renovate.yml is for.
+      - name: Validate renovate.json
+        run: nix shell --inputs-from . nixpkgs#renovate --command renovate-config-validator
