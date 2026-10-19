@@ -70,6 +70,11 @@
     defaultSopsFile = ../../../secrets/grimlock.yaml;
     age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
+    # Install secrets from a systemd unit rather than the activation script.
+    # The activation script path reloads units with systemctl, which NixOS
+    # deprecated and removes in 26.11.
+    useSystemdActivation = true;
+
     secrets = {
       pihole_admin_password.reloadUnits = [ "pihole-trusted.service" "pihole-restricted.service" ];
 
