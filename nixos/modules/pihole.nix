@@ -19,8 +19,20 @@ let
 
   envFile = name: config.sops.secrets."pihole-env-${name}".path;
 
+  # How long a container may take to report healthy. An env change recreates
+  # it, so this has to cover a cold FTL start.
+  settleSeconds = 90;
+
   mkInstance = name:
-    let up = "${compose} --env-file ${envFile name} up -d";
+    let
+      # --wait blocks until compose reports the service running|healthy and
+      # exits non-zero otherwise, so a switch cannot report success over a
+      # container that never came up. The image's HEALTHCHECK is
+      #   dig +short +norecurse +retry=0 @127.0.0.1 pi.hole
+      # so it proves FTL is answering locally. It says nothing about the
+      # upstreams or the macvlan, and nothing acts on a failure automatically:
+      # the unit just fails, and DNS going down is its own alarm.
+      up = "${compose} --env-file ${envFile name} up -d --wait --wait-timeout ${toString settleSeconds}";
     in lib.nameValuePair "pihole-${name}" {
       description = "Pi-hole (${name})";
       requires = [ "docker.service" "docker-network-dns-lan.service" ];
