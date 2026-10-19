@@ -108,6 +108,10 @@
     dates = "04:00";
     randomizedDelaySec = "15min";
 
+    # Drops --upgrade, which only means anything for channels. On a flake it
+    # is inert and logs a warning on every run.
+    upgrade = false;
+
     # No unattended reboots until the health gate and rollback exist.
     allowReboot = false;
   };
