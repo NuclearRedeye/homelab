@@ -23,14 +23,15 @@ let
   # it, so this has to cover a cold FTL start.
   settleSeconds = 90;
 
-  instanceUnits = map (name: "pihole-${name}.service") instances;
-
   mkInstance = name:
     let
       # --wait blocks until compose reports the service running|healthy and
-      # exits non-zero otherwise, so the unit's own state is the health
-      # signal. The HEALTHCHECK comes from the Pi-hole image; defining our
-      # own probe here would only be a worse guess at what FTL being up means.
+      # exits non-zero otherwise, so a switch cannot report success over a
+      # container that never came up. The image's HEALTHCHECK is
+      #   dig +short +norecurse +retry=0 @127.0.0.1 pi.hole
+      # so it proves FTL is answering locally. It says nothing about the
+      # upstreams or the macvlan, and nothing acts on a failure automatically:
+      # the unit just fails, and DNS going down is its own alarm.
       up = "${compose} --env-file ${envFile name} up -d --wait --wait-timeout ${toString settleSeconds}";
     in lib.nameValuePair "pihole-${name}" {
       description = "Pi-hole (${name})";
@@ -59,56 +60,6 @@ in
     ]) instances;
 
   systemd.services = {
-    # Probe after an unattended upgrade. Deliberately not onFailure on this
-    # unit: that also fires on evaluation, build and network failures, where
-    # nothing was activated and rolling back would discard a working
-    # generation for no reason. ExecStartPost runs only if the switch
-    # itself succeeded.
-    nixos-upgrade = lib.mkIf config.system.autoUpgrade.enable {
-      serviceConfig.ExecStartPost = [
-        "${config.systemd.package}/bin/systemctl restart pihole-health.service"
-      ];
-    };
-
-    # The gate. Because the instance units wait for healthy, their own state
-    # is the whole answer, so this is just a status check.
-    pihole-health = {
-      description = "Pi-hole health gate";
-      after = instanceUnits;
-      # wants, not requires: a Requires= dependency that fails prevents this
-      # unit from starting at all, which is precisely the case the gate
-      # exists to catch.
-      wants = instanceUnits;
-      wantedBy = [ "multi-user.target" ];
-      onFailure = [ "pihole-rollback.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = "${config.systemd.package}/bin/systemctl is-active --quiet ${lib.concatStringsSep " " instanceUnits}";
-      };
-    };
-
-    pihole-rollback = {
-      description = "Roll back after a failed Pi-hole health gate";
-      # systemd's own rate limit is the flap guard: at most one rollback an
-      # hour, so a previous generation that is also broken cannot walk us
-      # backwards through generations.
-      unitConfig = {
-        StartLimitIntervalSec = "1h";
-        StartLimitBurst = 1;
-      };
-      serviceConfig = {
-        Type = "oneshot";
-        TimeoutStartSec = "10min";
-        # Sequential, and oneshot stops at the first failure, so a failed
-        # rollback cannot fall through to re-activating the broken generation.
-        ExecStart = [
-          "${config.nix.package}/bin/nix-env --rollback --profile /nix/var/nix/profiles/system"
-          "/nix/var/nix/profiles/system/bin/switch-to-configuration switch"
-        ];
-      };
-    };
-
     # Create the macvlan network once per host, outside the compose file.
     docker-network-dns-lan = {
       description = "Docker macvlan network ${lan.name}";
