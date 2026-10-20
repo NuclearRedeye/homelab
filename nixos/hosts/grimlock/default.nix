@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 {
-  imports = [ ./disko.nix ../../modules/pihole.nix ];
+  imports = [ ./disko.nix ../../modules/base.nix ../../modules/pihole.nix ];
 
   networking.hostName = "grimlock";
   networking.useDHCP = lib.mkDefault true;
@@ -25,22 +25,6 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   services.fstrim.enable = true;
-
-  # Nix settings and housekeeping
-  nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
-    trusted-users = [ "root" "@wheel" ];
-    min-free = 5368709120; # When < 5GiB free space remains
-    max-free = 16106127360; # collect garbage until >=15 GiB is free
-  };
-
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 30d";
-  };
-
-  nix.optimise.automatic = true;
 
   # Admin user: key-only login, no password
   users.users.joel = {
