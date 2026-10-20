@@ -50,7 +50,8 @@
     # is inert and logs a warning on every run.
     upgrade = false;
 
-    # No unattended reboots until the health gate and rollback exist.
+    # FIXME(#19): Unattended reboots are disabled as the hosts are headless,
+    # so kernel patches need a manual reboot to be applied.
     allowReboot = false;
   };
 }
