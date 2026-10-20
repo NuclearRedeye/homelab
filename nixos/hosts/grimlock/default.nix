@@ -62,27 +62,11 @@
     };
   };
 
-  # Unattended updates from the public flake. Nothing automerges, so this
-  # only ever applies what has already been merged by hand.
-  system.autoUpgrade = {
-    enable = true;
-    flake = "github:NuclearRedeye/homelab#grimlock";
-    operation = "switch";
-
-    # 04:00 rather than the 04:40 default: the reboot decision is taken after
-    # the rebuild, and a run that overruns the window skips the reboot
-    # silently. Starting at 04:00 leaves the rebuild 45 minutes to finish
-    # inside the window C5 will set.
-    dates = "04:00";
-    randomizedDelaySec = "15min";
-
-    # Drops --upgrade, which only means anything for channels. On a flake it
-    # is inert and logs a warning on every run.
-    upgrade = false;
-
-    # No unattended reboots until the health gate and rollback exist.
-    allowReboot = false;
-  };
+  # 04:00 rather than the 04:40 default: the reboot decision is taken after
+  # the rebuild, and a run that overruns the window skips the reboot
+  # silently. Starting at 04:00 leaves the rebuild 45 minutes to finish
+  # inside the window C5 will set.
+  system.autoUpgrade.dates = "04:00";
 
   users.motd = "grimlock: managed by the homelab flake";
 

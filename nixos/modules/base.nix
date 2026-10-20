@@ -36,4 +36,21 @@
       PermitRootLogin = "no";
     };
   };
+
+  # Unattended updates from the public flake. Nothing automerges, so this
+  # only ever applies what has already been merged by hand. Each host sets
+  # its own dates, so cluster nodes never upgrade at once.
+  system.autoUpgrade = {
+    enable = true;
+    flake = "github:NuclearRedeye/homelab#${config.networking.hostName}";
+    operation = "switch";
+    randomizedDelaySec = "15min";
+
+    # Drops --upgrade, which only means anything for channels. On a flake it
+    # is inert and logs a warning on every run.
+    upgrade = false;
+
+    # No unattended reboots until the health gate and rollback exist.
+    allowReboot = false;
+  };
 }
