@@ -1,5 +1,9 @@
 { config, lib, pkgs, ... }:
 {
+  time.timeZone = "Europe/London";
+
+  services.fstrim.enable = true;
+
   # Nix settings and housekeeping
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];

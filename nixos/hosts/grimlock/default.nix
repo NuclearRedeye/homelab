@@ -11,8 +11,6 @@
   # Prevent DHCP overwriting nameservers
   networking.dhcpcd.extraConfig = "nohook resolv.conf";
 
-  time.timeZone = "Europe/London";
-
   # Hardware: Broadwell NUC (SATA = AHCI, USB 3 = xHCI)
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "usb_storage" "sd_mod" ];
   boot.kernelModules = [ "kvm-intel" ];
@@ -23,8 +21,6 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
-
-  services.fstrim.enable = true;
 
   # Docker: with iptables management disabled
   virtualisation.docker = {
