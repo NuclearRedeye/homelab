@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 {
-  imports = [ ./disko.nix ../../modules/pihole.nix ];
+  imports = [ ./disko.nix ../../modules/base.nix ../../modules/pihole.nix ];
 
   networking.hostName = "grimlock";
   networking.useDHCP = lib.mkDefault true;
@@ -10,8 +10,6 @@
 
   # Prevent DHCP overwriting nameservers
   networking.dhcpcd.extraConfig = "nohook resolv.conf";
-
-  time.timeZone = "Europe/London";
 
   # Hardware: Broadwell NUC (SATA = AHCI, USB 3 = xHCI)
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "usb_storage" "sd_mod" ];
@@ -23,41 +21,6 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
-
-  services.fstrim.enable = true;
-
-  # Nix settings and housekeeping
-  nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
-    trusted-users = [ "root" "@wheel" ];
-    min-free = 5368709120; # When < 5GiB free space remains
-    max-free = 16106127360; # collect garbage until >=15 GiB is free
-  };
-
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 30d";
-  };
-
-  nix.optimise.automatic = true;
-
-  # Admin user: key-only login, no password
-  users.users.joel = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" ];
-    openssh.authorizedKeys.keyFiles = [ ../../keys/joel.id_rsa.pub ];
-  };
-  security.sudo.wheelNeedsPassword = false;
-
-  services.openssh = {
-    enable = true;
-    settings = {
-      PasswordAuthentication = false;
-      KbdInteractiveAuthentication = false;
-      PermitRootLogin = "no";
-    };
-  };
 
   # Docker: with iptables management disabled
   virtualisation.docker = {
@@ -99,27 +62,11 @@
     };
   };
 
-  # Unattended updates from the public flake. Nothing automerges, so this
-  # only ever applies what has already been merged by hand.
-  system.autoUpgrade = {
-    enable = true;
-    flake = "github:NuclearRedeye/homelab#grimlock";
-    operation = "switch";
-
-    # 04:00 rather than the 04:40 default: the reboot decision is taken after
-    # the rebuild, and a run that overruns the window skips the reboot
-    # silently. Starting at 04:00 leaves the rebuild 45 minutes to finish
-    # inside the window C5 will set.
-    dates = "04:00";
-    randomizedDelaySec = "15min";
-
-    # Drops --upgrade, which only means anything for channels. On a flake it
-    # is inert and logs a warning on every run.
-    upgrade = false;
-
-    # No unattended reboots until the health gate and rollback exist.
-    allowReboot = false;
-  };
+  # 04:00 rather than the 04:40 default: the reboot decision is taken after
+  # the rebuild, and a run that overruns the window skips the reboot
+  # silently. Starting at 04:00 leaves the rebuild 45 minutes to finish
+  # inside the window C5 will set.
+  system.autoUpgrade.dates = "04:00";
 
   users.motd = "grimlock: managed by the homelab flake";
 
