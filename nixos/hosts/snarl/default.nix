@@ -16,6 +16,13 @@
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Secrets: decrypted into /run/secrets by a systemd unit
+  sops = {
+    age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+    useSystemdActivation = true;
+    secrets.k3s_token.sopsFile = ../../../secrets/k3s.yaml;
+  };
+
   # An hour after grimlock, leaving room to stagger the other k3s nodes
   system.autoUpgrade.dates = "05:00";
 
