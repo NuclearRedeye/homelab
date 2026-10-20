@@ -30,3 +30,20 @@ jobs:
       # exercise the Pi-hole image, which is just a string in compose.yaml.
       - name: Build the grimlock closure
         run: nix build .#nixosConfigurations.grimlock.config.system.build.toplevel
+
+  # FIXME(#23): Duplicates the grimlock job; collapse both into a matrix keyed by hostname.
+  snarl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702 # v31.11.2
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Check flake outputs
+        run: nix flake check
+
+      - name: Build the snarl closure
+        run: nix build .#nixosConfigurations.snarl.config.system.build.toplevel
