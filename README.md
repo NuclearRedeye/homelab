@@ -45,6 +45,23 @@ nixos-rebuild switch \
   --sudo
 ```
 
+## First Install
+
+New hosts are bootstrapped using [nixos-anywhere](https://github.com/nix-community/nixos-anywhere) over ssh. Note, this is a destructive operation!
+
+```sh
+nix run --inputs-from . nixpkgs#nixos-anywhere -- \
+  --flake .#<host> \
+  --target-host <host> \
+  --build-on remote
+```
+
+Once complete, remove the host's old entry from `known_hosts` before reconnecting.
+
+```sh
+ssh-keygen -R <host>
+```
+
 ## Secrets
 
 Secrets are encrypted and stored inside the repo using [sops](https://github.com/getsops/sops) and age.
