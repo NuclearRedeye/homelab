@@ -15,4 +15,21 @@
   };
 
   nix.optimise.automatic = true;
+
+  # Admin user: key-only login, no password
+  users.users.joel = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" ];
+    openssh.authorizedKeys.keyFiles = [ ../keys/joel.id_rsa.pub ];
+  };
+  security.sudo.wheelNeedsPassword = false;
+
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
+  };
 }
