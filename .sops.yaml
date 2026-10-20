@@ -1,11 +1,20 @@
 keys:
   - &admin age14h7wk9623cjgfvzx7lglztuwfftjmkufgmte88qs3rddmcw9aekqzav60f
   - &grimlock age18r4hvmudxpmuaxsgteyuyqpcnqrgrv5xwne2yagughnfgssm29mshvt3us
+  - &snarl age13lvz0l5jyjfdy7vtllnrqhy9rptk3j5ure09ppv6athjzucfkugsfhd7h0
 
+# One rule per host or group, so each host only decrypts its own secrets.
+# A file matching no rule is refused rather than shared by default.
 creation_rules:
-  # Every secret is decrypted on grimlock at activation and edited by admin.
-  - path_regex: ^secrets/
+  - path_regex: ^secrets/(grimlock\.yaml|pihole-[^/]+)$
     key_groups:
       - age:
           - *admin
           - *grimlock
+
+  # Shared by the k3s nodes; add each node's key as it joins.
+  - path_regex: ^secrets/k3s\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *snarl
