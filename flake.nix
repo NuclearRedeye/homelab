@@ -53,6 +53,9 @@
             # Point kubectl at the homelab cluster, never at whatever ~/.kube/config holds.
             shellHook = ''
               export KUBECONFIG="$HOME/.kube/homelab.yaml"
+
+              # A short prompt that makes it obvious when you're inside the dev shell.
+              PS1='[\[\e[1;34m\]nix\[\e[0m\]:\[\e[1;32m\]homelab\[\e[0m\]] \W \$ '
             ''
             # nixos-rebuild budgets its ssh ControlPath against Linux's
             # 107-byte socket limit, but darwin's is 103. A nix shell TMPDIR
