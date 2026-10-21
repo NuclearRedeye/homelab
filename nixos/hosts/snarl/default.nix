@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 {
-  imports = [ ./disko.nix ../../modules/base.nix ];
+  imports = [ ./disko.nix ../../modules/base.nix ../../modules/k3s.nix ];
 
   networking.hostName = "snarl";
   networking.useDHCP = lib.mkDefault true;
@@ -22,6 +22,10 @@
     useSystemdActivation = true;
     secrets.k3s_token.sopsFile = ../../../secrets/k3s.yaml;
   };
+
+  # TODO: Switch to serverAddr once the other nodes have joined; a reinstall
+  # with clusterInit set would start a second cluster.
+  services.k3s.clusterInit = true;
 
   # An hour after grimlock, leaving room to stagger the other k3s nodes
   system.autoUpgrade.dates = "05:00";
