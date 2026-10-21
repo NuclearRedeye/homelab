@@ -48,13 +48,17 @@
         let pkgs = nixpkgs.legacyPackages.${system};
         in {
           default = pkgs.mkShellNoCC {
-            packages = with pkgs; [ nixos-rebuild sops age ssh-to-age gitleaks ];
+            packages = with pkgs; [ nixos-rebuild sops age ssh-to-age gitleaks kubectl ];
 
+            # Point kubectl at the homelab cluster, never at whatever ~/.kube/config holds.
+            shellHook = ''
+              export KUBECONFIG="$HOME/.kube/homelab.yaml"
+            ''
             # nixos-rebuild budgets its ssh ControlPath against Linux's
             # 107-byte socket limit, but darwin's is 103. A nix shell TMPDIR
             # is 44 bytes, which passes its check and still overflows ssh,
             # so shorten it past the gap.
-            shellHook = nixpkgs.lib.optionalString pkgs.stdenv.isDarwin ''
+            + nixpkgs.lib.optionalString pkgs.stdenv.isDarwin ''
               export TMPDIR=/tmp
             '';
           };
