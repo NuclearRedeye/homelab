@@ -62,6 +62,18 @@ Once complete, remove the host's old entry from `known_hosts` before reconnectin
 ssh-keygen -R <host>
 ```
 
+A new host can't decrypt secrets until its key is in `.sops.yaml`, so install it and then fetch its host key using...
+
+```sh
+ssh-keyscan -t ed25519 <host> | ssh-to-age
+```
+
+Add the key to the relevant rule in `.sops.yaml`, then re-encrypt the affected files using...
+
+```sh
+sops updatekeys <file>
+```
+
 ## Secrets
 
 Secrets are encrypted and stored inside the repo using [sops](https://github.com/getsops/sops) and age.
