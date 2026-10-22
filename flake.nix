@@ -51,6 +51,14 @@
         ];
       };
 
+      nixosConfigurations.slag = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          disko.nixosModules.disko
+          ./nixos/hosts/slag
+        ];
+      };
+
       # Everything needed to deploy this flake and edit its secrets,
       # versioned by flake.lock rather than by whatever is on PATH.
       devShells = forEachSystem (system:
