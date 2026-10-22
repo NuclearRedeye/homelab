@@ -3,6 +3,7 @@ keys:
   - &grimlock age18r4hvmudxpmuaxsgteyuyqpcnqrgrv5xwne2yagughnfgssm29mshvt3us
   - &snarl age13lvz0l5jyjfdy7vtllnrqhy9rptk3j5ure09ppv6athjzucfkugsfhd7h0
   - &swoop age1dfn03nvzn0mvsm0ucyaueng6hrv8jj6wl88lq2dyjxp0pa29046sk45uq8
+  - &slag age1wltf8tnhg076ul9d4js3xv6uh8rcqzm308m5mpupqyy9p4rx2y5qxslcdh
 
 # One rule per host or group, so each host only decrypts its own secrets.
 # A file matching no rule is refused rather than shared by default.
@@ -20,3 +21,4 @@ creation_rules:
           - *admin
           - *snarl
           - *swoop
+          - *slag
