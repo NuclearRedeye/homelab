@@ -23,9 +23,9 @@
     secrets.k3s_token.sopsFile = ../../../secrets/k3s.yaml;
   };
 
-  # TODO: Switch to serverAddr once the other nodes have joined; a reinstall
-  # with clusterInit set would start a second cluster.
-  services.k3s.clusterInit = true;
+  # Started the cluster with clusterInit; now joins via a peer so a reinstall
+  # rejoins rather than creating a second cluster.
+  services.k3s.serverAddr = "https://swoop:6443";
 
   # An hour after grimlock, leaving room to stagger the other k3s nodes
   system.autoUpgrade.dates = "05:00";
