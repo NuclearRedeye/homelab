@@ -21,18 +21,18 @@ Then, check the flake is valid and builds...
 
 ```sh
 nixos-rebuild build \
-  --flake .#grimlock \
-  --build-host grimlock \
-  --target-host grimlock
+  --flake .#<host> \
+  --build-host <host> \
+  --target-host <host>
 ```
 
 Then, switch to the new derivation using...
 
 ```sh
 nixos-rebuild switch \
-  --flake .#grimlock \
-  --build-host grimlock \
-  --target-host grimlock \
+  --flake .#<host> \
+  --build-host <host> \
+  --target-host <host> \
   --sudo
 ```
 
@@ -41,7 +41,7 @@ Any issues, roll back to the previous derivation using...
 ```sh
 nixos-rebuild switch \
   --rollback \
-  --target-host grimlock \
+  --target-host <host> \
   --sudo
 ```
 
@@ -69,13 +69,13 @@ Secrets are encrypted and stored inside the repo using [sops](https://github.com
 Secrets can be edited/updated in place using...
 
 ```sh
-sops secrets/grimlock.yaml
+sops <file>
 ```
 
 And decrypted using...
 
 ```sh
-sops --decrypt secrets/pihole-net
+sops --decrypt <file>
 ```
 
 Files under `secrets/` with no extension are whole-file secrets, written out verbatim.
