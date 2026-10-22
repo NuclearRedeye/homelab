@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 {
-  imports = [ ./disko.nix ../../modules/base.nix ];
+  imports = [ ./disko.nix ../../modules/base.nix ../../modules/k3s.nix ];
 
   networking.hostName = "slag";
   networking.useDHCP = lib.mkDefault true;
@@ -15,6 +15,16 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  # Secrets: decrypted into /run/secrets by a systemd unit
+  sops = {
+    age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+    useSystemdActivation = true;
+    secrets.k3s_token.sopsFile = ../../../secrets/k3s.yaml;
+  };
+
+  # Joins the cluster snarl started
+  services.k3s.serverAddr = "https://snarl:6443";
 
   # Half an hour after swoop, so the k3s nodes never upgrade together
   system.autoUpgrade.dates = "06:00";
