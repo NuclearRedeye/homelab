@@ -92,6 +92,10 @@ sops --decrypt <file>
 
 Files under `secrets/` with no extension are whole-file secrets, written out verbatim.
 
+## Runbooks
+
+- [k3s etcd Recovery](docs/runbooks/k3s-etcd-recovery.md)
+
 ## License
 
 Licensed under [MIT](https://choosealicense.com/licenses/mit/).
