@@ -1,7 +1,7 @@
 {
   disko.devices.disk.main = {
     type = "disk";
-    device = "/dev/sda";
+    device = "/dev/disk/by-id/ata-SAMSUNG_MZNLH128HBHQ-000H1_S4HENX1N708951";
     content = {
       type = "gpt";
       partitions = {
