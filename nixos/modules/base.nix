@@ -20,6 +20,12 @@
 
   nix.optimise.automatic = true;
 
+  # Keep local logs short; long-term retention belongs in central logging
+  services.journald.extraConfig = ''
+    SystemMaxUse=1G
+    MaxRetentionSec=7day
+  '';
+
   # Admin user: key-only login, no password
   users.users.joel = {
     isNormalUser = true;
