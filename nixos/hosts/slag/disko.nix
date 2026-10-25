@@ -1,7 +1,7 @@
 {
   disko.devices.disk.main = {
     type = "disk";
-    device = "/dev/sda";
+    device = "/dev/disk/by-id/ata-SAMSUNG_SSD_PM871b_M.2_2280_128GB_S3U2NF0JA01409";
     content = {
       type = "gpt";
       partitions = {
