@@ -1,7 +1,7 @@
 {
   disko.devices.disk.main = {
     type = "disk";
-    device = "/dev/sda";
+    device = "/dev/disk/by-id/ata-SanDisk_SD8SN8U-128G-1006_174615800891";
     content = {
       type = "gpt";
       partitions = {
