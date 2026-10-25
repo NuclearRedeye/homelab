@@ -26,9 +26,10 @@ Recovering the k3s cluster after a node's hardware fails, quorum is lost, or dat
 
 ### Replace a Failed Node
 
-1. Remove its old etcd member using `kubectl delete node <host>`.
-2. Once repaired, reinstall it using First Install in the [README](../../README.md). Its host key is new, so update its key in `.sops.yaml` and run `sops updatekeys secrets/k3s.yaml`.
-3. Deploy it, and it rejoins through its `serverAddr`.
+1. Stop k3s on it using `sudo systemctl stop k3s`.
+2. Remove its old etcd member using `kubectl delete node <host>`.
+3. Once repaired, reinstall it using First Install in the [README](../../README.md). Its host key is new, so update its key in `.sops.yaml` and run `sops updatekeys secrets/k3s.yaml`.
+4. Deploy it, and it rejoins through its `serverAddr`.
 
 ### Recover From Lost Quorum
 
