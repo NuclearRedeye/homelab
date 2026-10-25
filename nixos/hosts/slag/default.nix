@@ -23,7 +23,7 @@
     secrets.k3s_token.sopsFile = ../../../secrets/k3s.yaml;
   };
 
-  # Joins the cluster snarl started
+  # Joins the cluster through snarl
   services.k3s.serverAddr = "https://snarl:6443";
 
   # Half an hour after swoop, so the k3s nodes never upgrade together
