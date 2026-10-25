@@ -3,7 +3,7 @@ keys:
   - &grimlock age18r4hvmudxpmuaxsgteyuyqpcnqrgrv5xwne2yagughnfgssm29mshvt3us
   - &snarl age13lvz0l5jyjfdy7vtllnrqhy9rptk3j5ure09ppv6athjzucfkugsfhd7h0
   - &swoop age1du2sh7693ndkfjsedk87e5f4v5anwh2qsx4qx5pe08few3cnw3hsuvys5a
-  - &slag age1wltf8tnhg076ul9d4js3xv6uh8rcqzm308m5mpupqyy9p4rx2y5qxslcdh
+  - &slag age1y8wxqdgqwrmjw6ved6mupk7wtdw4ld4v6lhn7pq68rf2mymau5yq9awdkw
 
 # One rule per host or group, so each host only decrypts its own secrets.
 # A file matching no rule is refused rather than shared by default.
