@@ -9,8 +9,19 @@
     package = pkgs.k3s_1_36;
     tokenFile = config.sops.secrets.k3s_token.path;
 
-    # Ingress and load balancing are chosen later, not bundled.
-    extraFlags = [ "--disable=traefik" "--disable=servicelb" ];
+    # Cluster traffic (etcd, kubelet, flannel) uses the cluster VLAN
+    nodeIP = (lib.head config.networking.interfaces.cluster.ipv4.addresses).address;
+
+    extraFlags = [
+      # Ingress and load balancing are chosen later, not bundled.
+      "--disable=traefik"
+      "--disable=servicelb"
+
+      "--flannel-iface=cluster"
+
+      # Keep the hostname valid for kubectl over the LAN
+      "--tls-san=${config.networking.hostName}"
+    ];
   };
 
   # API, etcd peers and kubelet; UDP is flannel's VXLAN between nodes.
