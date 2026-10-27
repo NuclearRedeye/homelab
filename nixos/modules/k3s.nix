@@ -24,7 +24,15 @@
     ];
   };
 
-  # API, etcd peers and kubelet; UDP is flannel's VXLAN between nodes.
-  networking.firewall.allowedTCPPorts = [ 6443 2379 2380 10250 ];
-  networking.firewall.allowedUDPPorts = [ 8472 ];
+  # The API is open to the LAN for kubectl
+  networking.firewall.allowedTCPPorts = [ 6443 ];
+
+  # etcd, kubelet and flannel VXLAN only on the cluster VLAN
+  networking.firewall.interfaces.cluster = {
+    allowedTCPPorts = [ 2379 2380 10250 ];
+    allowedUDPPorts = [ 8472 ];
+  };
+
+  # metrics-server reaches its own node's kubelet from the pod network
+  networking.firewall.interfaces.cni0.allowedTCPPorts = [ 10250 ];
 }
