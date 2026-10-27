@@ -19,6 +19,10 @@
 
       "--flannel-iface=cluster"
 
+      # Encrypt Secrets at rest in etcd; secretbox over the aescbc default
+      "--secrets-encryption"
+      "--secrets-encryption-provider=secretbox"
+
       # Keep the hostname valid for kubectl over the LAN
       "--tls-san=${config.networking.hostName}"
     ];
