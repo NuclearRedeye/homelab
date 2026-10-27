@@ -31,7 +31,7 @@
   };
 
   # Joins the cluster through snarl
-  services.k3s.serverAddr = "https://snarl:6443";
+  services.k3s.serverAddr = "https://10.0.100.42:6443";
 
   # Half an hour after swoop, so the k3s nodes never upgrade together
   system.autoUpgrade.dates = "06:00";
