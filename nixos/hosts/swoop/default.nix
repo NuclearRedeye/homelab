@@ -5,6 +5,13 @@
   networking.hostName = "swoop";
   networking.useDHCP = lib.mkDefault true;
 
+  # Cluster traffic: tagged VLAN 100, unrouted, nodes only
+  networking.vlans.cluster = { id = 100; interface = "enp0s25"; };
+  networking.interfaces.cluster = {
+    useDHCP = false;
+    ipv4.addresses = [ { address = "10.0.100.43"; prefixLength = 24; } ];
+  };
+
   # Hardware: NUC5i3MYBE, Broadwell (SATA = AHCI, USB 3 = xHCI)
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "usb_storage" "sd_mod" ];
   boot.kernelModules = [ "kvm-intel" ];
