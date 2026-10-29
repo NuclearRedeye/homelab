@@ -13,7 +13,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Decides which areas a PR touches. Filtering here rather than in on.paths,
+  # because a job skipped by if: still reports, so it can be required.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      hosts: ${{ steps.diff.outputs.hosts }}
+    steps:
+      # Depth 2 reaches the PR merge commit's first parent: the base branch tip.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+
+      - name: List changed areas
+        id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          # Only a PR merge commit has a base to diff against; anything else runs every area.
+          if [[ "$EVENT" != pull_request ]] || ! git rev-parse --quiet --verify HEAD^2 >/dev/null; then
+            echo "hosts=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # --no-renames lists both sides of a move, so moving a file out of nixos/ still counts.
+          files=$(git diff --name-only --no-renames HEAD^1 HEAD)
+          echo "$files"
+
+          # An ignore list, not an allow list: a missed path should cost a build, not skip one.
+          ignored='(\.md$|^docs/|^LICENSE$|^renovate\.json$|^\.github/workflows/renovate\.yml$)'
+          if [[ -z "$files" ]] || grep --quiet --invert-match --extended-regexp "$ignored" <<<"$files"; then
+            echo "hosts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hosts=false" >> "$GITHUB_OUTPUT"
+          fi
+
   grimlock:
+    needs: changes
+    if: needs.changes.outputs.hosts == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -33,6 +70,8 @@ jobs:
 
   # FIXME(#23): Duplicates the grimlock job; collapse both into a matrix keyed by hostname.
   snarl:
+    needs: changes
+    if: needs.changes.outputs.hosts == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,6 +89,8 @@ jobs:
 
   # FIXME(#23): Duplicates the grimlock job; collapse the host jobs into a matrix keyed by hostname.
   swoop:
+    needs: changes
+    if: needs.changes.outputs.hosts == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -67,6 +108,8 @@ jobs:
 
   # FIXME(#23): Duplicates the grimlock job; collapse the host jobs into a matrix keyed by hostname.
   slag:
+    needs: changes
+    if: needs.changes.outputs.hosts == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -81,3 +124,18 @@ jobs:
 
       - name: Build the slag closure
         run: nix build .#nixosConfigurations.slag.config.system.build.toplevel
+
+  # The one check main needs to require. A job skipped by if: reports success,
+  # so this passes when every area either passed or had nothing to check.
+  gate:
+    # Without always(), a failed area job would skip the gate, and a skipped gate counts as green.
+    if: always()
+    needs: [changes, grimlock, snarl, swoop, slag]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to pass or skip
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          jq --raw-output 'to_entries[] | "\(.key): \(.value.result)"' <<<"$NEEDS"
+          jq --exit-status 'all(.[]; .result == "success" or .result == "skipped")' <<<"$NEEDS" >/dev/null
