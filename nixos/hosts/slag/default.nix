@@ -33,8 +33,9 @@
   # Joins the cluster through snarl
   services.k3s.serverAddr = "https://10.0.100.42:6443";
 
-  # Half an hour after swoop, so the k3s nodes never upgrade together
-  system.autoUpgrade.dates = "06:00";
+  # One k3s node per night, so a bad change can only take one etcd member down.
+  # TODO(#36): Gate each node on its predecessor rather than relying on the calendar.
+  system.autoUpgrade.dates = "Mon,Thu 05:00";
 
   users.motd = "slag: managed by the homelab flake";
 
