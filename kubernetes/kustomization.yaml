@@ -6,3 +6,4 @@ resources:
 - flux-system
 - settings/ks.yaml
 - apps/guardrails/ks.yaml
+- apps/metallb/ks.yaml
