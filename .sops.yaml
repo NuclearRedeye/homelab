@@ -5,7 +5,7 @@ keys:
   - &swoop age1du2sh7693ndkfjsedk87e5f4v5anwh2qsx4qx5pe08few3cnw3hsuvys5a
   - &slag age1y8wxqdgqwrmjw6ved6mupk7wtdw4ld4v6lhn7pq68rf2mymau5yq9awdkw
   # Lives only in the cluster's sops-age Secret; no copy is kept.
-  - &flux age15gquw7rlmy07phxptxzp9t8vdlungv3m9vvs6qg6vwtrv4jk2cqsl09j3j
+  - &flux age13e4686a0ynep9aml33c058nyxxjq3grhewa46cw5432neh0yaq4s9rgxlq
 
 # One rule per host or group, so each host only decrypts its own secrets.
 # A file matching no rule is refused rather than shared by default.
