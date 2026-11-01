@@ -6,4 +6,3 @@ resources:
 - flux-system
 - settings/ks.yaml
 - apps/guardrails/ks.yaml
-- apps/smoke-test/ks.yaml
