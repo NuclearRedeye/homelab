@@ -1,0 +1,18 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: metallb
+  namespace: metallb-system
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: metallb
+      version: 0.16.1
+      sourceRef:
+        kind: HelmRepository
+        name: metallb
+  values:
+    # L2 mode only; the chart enables the frr-k8s BGP backend by default.
+    frrk8s:
+      enabled: false
