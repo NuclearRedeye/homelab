@@ -66,7 +66,7 @@
         let pkgs = nixpkgs.legacyPackages.${system};
         in {
           default = pkgs.mkShellNoCC {
-            packages = with pkgs; [ nixos-rebuild sops age ssh-to-age gitleaks kubectl ];
+            packages = with pkgs; [ nixos-rebuild sops age ssh-to-age gitleaks kubectl fluxcd kustomize kubeconform ];
 
             # Point kubectl at the homelab cluster, never at whatever ~/.kube/config holds.
             shellHook = ''
