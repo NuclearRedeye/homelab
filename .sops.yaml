@@ -4,6 +4,8 @@ keys:
   - &snarl age1psnxjfk7gsp4h08hdhzpkxurp5j2js4etdzmwxpltnqlj4y9549s5z2vrx
   - &swoop age1du2sh7693ndkfjsedk87e5f4v5anwh2qsx4qx5pe08few3cnw3hsuvys5a
   - &slag age1y8wxqdgqwrmjw6ved6mupk7wtdw4ld4v6lhn7pq68rf2mymau5yq9awdkw
+  # Lives only in the cluster's sops-age Secret; no copy is kept.
+  - &flux age15gquw7rlmy07phxptxzp9t8vdlungv3m9vvs6qg6vwtrv4jk2cqsl09j3j
 
 # One rule per host or group, so each host only decrypts its own secrets.
 # A file matching no rule is refused rather than shared by default.
@@ -22,3 +24,12 @@ creation_rules:
           - *snarl
           - *swoop
           - *slag
+
+  # Decrypted in-cluster by Flux. Only data and stringData are encrypted, so
+  # diffs still show which Secret and which key changed.
+  - path_regex: ^kubernetes/.*\.sops\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    key_groups:
+      - age:
+          - *admin
+          - *flux

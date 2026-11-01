@@ -4,3 +4,4 @@ namespace: smoke-test
 resources:
 - namespace.yaml
 - configmap.yaml
+- secret.sops.yaml

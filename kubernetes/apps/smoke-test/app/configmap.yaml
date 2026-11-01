@@ -4,3 +4,4 @@ metadata:
   name: smoke-test
 data:
   purpose: Proves Flux reconciles this repo.
+  substituted: ${SMOKE_TEST_VALUE}
