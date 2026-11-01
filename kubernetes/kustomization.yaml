@@ -1,0 +1,6 @@
+# Entry point for the flux-system Kustomization. List each app's ks.yaml,
+# never its app/ dir, so every app reconciles and fails on its own.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- flux-system
