@@ -31,10 +31,10 @@
   # The API is open to the LAN for kubectl
   networking.firewall.allowedTCPPorts = [ 6443 ];
 
-  # etcd, kubelet and flannel VXLAN only on the cluster VLAN
+  # etcd, kubelet, flannel VXLAN and MetalLB memberlist only on the cluster VLAN
   networking.firewall.interfaces.cluster = {
-    allowedTCPPorts = [ 2379 2380 10250 ];
-    allowedUDPPorts = [ 8472 ];
+    allowedTCPPorts = [ 2379 2380 7946 10250 ];
+    allowedUDPPorts = [ 7946 8472 ];
   };
 
   # metrics-server reaches its own node's kubelet from the pod network
