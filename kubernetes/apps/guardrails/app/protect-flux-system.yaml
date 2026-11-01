@@ -1,0 +1,36 @@
+# Deleting either object while the controllers run prunes every app Flux
+# manages. Friction against accidents, not a lock: cluster-admin can remove it.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: protect-flux-system
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: ["v1"]
+      operations: ["DELETE"]
+      resources: ["namespaces"]
+      resourceNames: ["flux-system"]
+    - apiGroups: ["kustomize.toolkit.fluxcd.io"]
+      apiVersions: ["*"]
+      operations: ["DELETE"]
+      resources: ["kustomizations"]
+      resourceNames: ["flux-system"]
+  validations:
+  - expression: >-
+      has(oldObject.metadata.annotations) &&
+      'homelab/allow-delete' in oldObject.metadata.annotations &&
+      oldObject.metadata.annotations['homelab/allow-delete'] == 'true'
+    message: >-
+      flux-system is protected. Annotate it homelab/allow-delete=true first;
+      see docs/runbooks/flux-recovery.md.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: protect-flux-system
+spec:
+  policyName: protect-flux-system
+  validationActions: [Deny]

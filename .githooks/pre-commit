@@ -5,6 +5,17 @@
 # Enable once per clone: git config core.hooksPath .githooks
 set -eu
 
+# gitleaks won't spot a made-up password in a plain Secret, so check that
+# staged kubernetes/ YAML is encrypted first.
+if command -v sops >/dev/null 2>&1; then
+  git diff --cached --name-only --diff-filter=ACMR -z -- 'kubernetes/*.yaml' \
+    | xargs -0 kubernetes/check-encryption.sh --staged
+else
+  git diff --cached --name-only --diff-filter=ACMR -z -- 'kubernetes/*.yaml' \
+    | xargs -0 nix shell --inputs-from . nixpkgs#sops --command \
+        kubernetes/check-encryption.sh --staged
+fi
+
 if command -v gitleaks >/dev/null 2>&1; then
   exec gitleaks git --staged --no-banner --redact
 fi

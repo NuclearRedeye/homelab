@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Validates kubernetes/ as Flux will build it. Run inside the dev shell:
+#   nix develop -c kubernetes/validate.sh
+# Based on fluxcd/flux2-kustomize-helm-example's scripts/validate.sh.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+echo "Checking secrets are encrypted"
+find . -name '*.yaml' -print0 | xargs -0 ./check-encryption.sh
+
+# Schemas for the Flux version in the repo, not the CLI's, so Renovate bumps
+# validate against what will actually run.
+version=$(sed -n 's/^# Flux Version: //p' flux-system/gotk-components.yaml)
+schemas=$(mktemp -d)
+trap 'rm -rf "$schemas"' EXIT
+mkdir -p "$schemas/master-standalone-strict"
+curl -sSfL "https://github.com/fluxcd/flux2/releases/download/${version}/crd-schemas.tar.gz" \
+  | tar zxf - -C "$schemas/master-standalone-strict"
+
+# Secrets are skipped as their sops metadata fails strict validation, and CRDs
+# as upstream ships them and no schema exists. Unknown kinds still fail.
+find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
+  dir=$(dirname "$file")
+  echo "Validating $dir"
+  kustomize build "$dir" \
+    | kubeconform -strict -summary -skip Secret,CustomResourceDefinition \
+        -schema-location default -schema-location "$schemas"
+done
