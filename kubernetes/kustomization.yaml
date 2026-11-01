@@ -4,5 +4,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - flux-system
+- settings/ks.yaml
 - apps/guardrails/ks.yaml
 - apps/smoke-test/ks.yaml

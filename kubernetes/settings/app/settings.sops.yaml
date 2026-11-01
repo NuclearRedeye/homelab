@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: cluster-settings
+    namespace: flux-system
+stringData:
+    SMOKE_TEST_VALUE: ENC[AES256_GCM,data:Ialg+2XXJjZG6Y1lgqI5Bzo63teV4PkTTA==,iv:CPBaU1PSCGA9Hrbx8jXGrYq6W/a65WBvydhgIwdIMLE=,tag:yNXBnQWFDUkQiCPwRJyrfg==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBKUGc4UDdzYjJPZXBMeWtH
+            WVFzZVhPS1A3RmNjcDF4MkhTdGdQS2xCNlh3CnJxNnJyM084b1NENURzMk90WmV6
+            TEgreDZWQ3dGQmIxNTJkODJTTWpNRGsKLS0tIFJmT2g2QVVRYm9DQnZnbnhjL3Ba
+            NVc0dkRoSU9VZ1A2WUxsd1ZPeGZJVWMKHkRCNBdPlPHIKWz7SUBCJ9soUCQrJ6iX
+            vvMKUwNcNBEMdEZNUj4dy0LQtnLt+k7EvWR943pRq539YmnaiUY55Q==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age14h7wk9623cjgfvzx7lglztuwfftjmkufgmte88qs3rddmcw9aekqzav60f
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAyQjRhT1VoMFdXV3R5ZWZQ
+            c3hDbGhDK25BSkZMSjJwT0RvSVQvdjBqaVR3ClArTWU3NW40VEpkMnpoTDFadmVI
+            VnNGd3ZJM29tT2p5Z2paUTZFSVFSMWsKLS0tIEkzRHJDSmRRNDJIeEZpOWEyVlBz
+            Ny84bElvRmQ0QUFXUUZLZFRhdHVvM0EK69e/RtWDChunoB0tQ7apg+axh+aUDCwv
+            t0K8cy/+Ra1kCAuo2wX0/2c6jD/+ik59tGT2iHQBYMMcnIJASpcwPw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age15gquw7rlmy07phxptxzp9t8vdlungv3m9vvs6qg6vwtrv4jk2cqsl09j3j
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-01T20:46:38Z"
+    mac: ENC[AES256_GCM,data:HfwiQ6bKRsW434xiu/gBdCAMVlVOyqHWfEzZbptZPtrOASEnOj/rc2f0bK/VNM/0vQLVggfAeNn6MlG/57GqZx5SoOClpqPUaajaSBZJbA/z7/1ESyNseBRWpFs9q24mLmWzVm3/BrmpVnZUip9EOphTUAe2g5QjmTNoIursHXg=,iv:QzuQ58scP7/YbS2N1F6SSSTOp3OfoZ8ltZqyOdZIKS0=,tag:PGLK3aMKRtsbNPLha4WIRA==,type:str]
+    version: 3.13.3
