@@ -18,6 +18,11 @@ mkdir -p "$schemas/master-standalone-strict"
 curl -sSfL "https://github.com/fluxcd/flux2/releases/download/${version}/crd-schemas.tar.gz" \
   | tar zxf - -C "$schemas/master-standalone-strict"
 
+# Schemas for other custom resources, matched by API version. Pinned so results
+# match on every machine; Renovate bumps the commit.
+crd_catalog_ref=27233a506de0085e71c7f9702597806a7f95eb24
+crd_catalog="https://raw.githubusercontent.com/datreeio/CRDs-catalog/${crd_catalog_ref}/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+
 # Secrets are skipped as their sops metadata fails strict validation, and CRDs
 # as upstream ships them and no schema exists. Unknown kinds still fail.
 find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
@@ -25,5 +30,6 @@ find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
   echo "Validating $dir"
   kustomize build "$dir" \
     | kubeconform -strict -summary -skip Secret,CustomResourceDefinition \
-        -schema-location default -schema-location "$schemas"
+        -schema-location default -schema-location "$schemas" \
+        -schema-location "$crd_catalog"
 done
