@@ -3,7 +3,8 @@ kind: Secret
 metadata:
     name: cluster-settings
     namespace: flux-system
-stringData: {}
+stringData:
+    METALLB_POOL: ENC[AES256_GCM,data:HeChzT1OwB/idTk9ijREvQ==,iv:JXgVUmdtS6X2W+Cxuk4vAdqr5w4R/bfsx0eaeoXqLbI=,tag:226AAKglUdU3DdL8o2IU+w==,type:str]
 sops:
     age:
         - enc: |
@@ -25,6 +26,6 @@ sops:
             -----END AGE ENCRYPTED FILE-----
           recipient: age13e4686a0ynep9aml33c058nyxxjq3grhewa46cw5432neh0yaq4s9rgxlq
     encrypted_regex: ^(data|stringData)$
-    lastmodified: "2026-11-01T21:20:35Z"
-    mac: ENC[AES256_GCM,data:pikhOboJrrU0Ro7p4ZQuXtf9Kh9T9bstnibvauptF3PRP8KakGkIkpk/QU5c/51NbXWtXi9bKKJHdFKlzPEc7NX1tU+N6TwPGD5ZCtpqBhNaY0JgD0iHIUz5zKphkXkDik46rv2TRq4FsWsVIbKLgXtMb/PZZwhA7DfXjKNrBi0=,iv:s22su/kAQEblcd5W1bGjTd/CmAU6xgv+xL21Ge5hfeQ=,tag:UWYag/dtoOTrp/Kc/WcL+Q==,type:str]
+    lastmodified: "2026-11-02T18:53:30Z"
+    mac: ENC[AES256_GCM,data:QYo2eir3tBwG+AcO8QLEeEeApjIrxsLOhz+Y3JTZGBQm3jqNhv+HIeMxCfEe9o5NKNG5CtVT1A0poet7IFR8aAktMlSG/QOtunpDOp80WZDsKw/WqILf/mnYGX/U6zHE7f5RvJqL08+oLQxiph5xpVORP/mgYgHbOqhV0LS+3PA=,iv:QfenJ6Ul1QBh2XOh3DYlJMoGZzItS+kDgvEq0He2F+M=,tag:WrkllCZ18SZkpCxSQm4qJA==,type:str]
     version: 3.13.3

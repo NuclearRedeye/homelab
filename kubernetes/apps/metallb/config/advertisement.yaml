@@ -1,0 +1,11 @@
+# Only the LAN NIC, so nothing is announced on the unrouted cluster VLAN.
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: lan
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - lan
+  interfaces:
+  - enp0s25
