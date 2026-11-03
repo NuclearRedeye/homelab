@@ -14,3 +14,6 @@ spec:
     crds:
       enabled: true
       keep: true
+    # Split-horizon LAN DNS hides the public zone; check challenges over DoH instead.
+    dns01RecursiveNameservers: https://1.1.1.1/dns-query,https://8.8.8.8/dns-query
+    dns01RecursiveNameserversOnly: true
