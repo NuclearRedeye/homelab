@@ -1,0 +1,16 @@
+# Gateway-shim stays off (the chart default); certificates are explicit Certificate objects.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: cert-manager
+  values:
+    # keep: true so a bad release can't delete the CRDs, and every Certificate with them.
+    crds:
+      enabled: true
+      keep: true

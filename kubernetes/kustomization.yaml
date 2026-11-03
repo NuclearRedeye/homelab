@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - flux-system
 - settings/ks.yaml
+- apps/cert-manager/ks.yaml
 - apps/gateway-api/ks.yaml
 - apps/guardrails/ks.yaml
 - apps/metallb/ks.yaml
