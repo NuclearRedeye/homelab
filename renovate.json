@@ -52,6 +52,12 @@
       "automerge": false
     },
     {
+      "description": "Gateway API CRDs must stay within the Standard version the pinned Traefik supports, listed in its kubernetes-gateway provider docs. Hold bumps until Traefik catches up.",
+      "matchDatasources": ["github-tags"],
+      "matchPackageNames": ["kubernetes-sigs/gateway-api"],
+      "automerge": false
+    },
+    {
       "description": "Pi-hole tags are calver (2026.07.2); strict semver rejects the leading zero in the month.",
       "matchPackageNames": ["pihole/pihole"],
       "versioning": "loose"
