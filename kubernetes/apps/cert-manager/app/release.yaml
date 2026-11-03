@@ -14,3 +14,7 @@ spec:
     crds:
       enabled: true
       keep: true
+    # Split-horizon LAN DNS hides the public zone; check challenges over DoH instead.
+    # One server only: cert-manager requires every listed server to see the record.
+    dns01RecursiveNameservers: https://1.1.1.1/dns-query
+    dns01RecursiveNameserversOnly: true
