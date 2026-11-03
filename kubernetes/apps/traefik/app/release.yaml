@@ -1,0 +1,35 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: traefik
+  namespace: traefik
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: traefik
+  # The chart's crds/ holds Traefik's own CRDs only; Helm won't update them unless asked.
+  upgrade:
+    crds: CreateReplace
+  values:
+    deployment:
+      kind: DaemonSet
+    providers:
+      kubernetesGateway:
+        enabled: true
+      # Only for Middleware, referenced from HTTPRoutes through ExtensionRef.
+      kubernetesCRD:
+        enabled: true
+      kubernetesIngress:
+        enabled: false
+    ingressClass:
+      enabled: false
+    # The Gateway lives in apps/traefik/config (#97), with our listeners and certificates.
+    gateway:
+      enabled: false
+    service:
+      annotations:
+        metallb.io/loadBalancerIPs: ${TRAEFIK_IP}
+      spec:
+        # Keeps the client IP, and avoids the endpoint-removal tail seen in #83.
+        externalTrafficPolicy: Local
