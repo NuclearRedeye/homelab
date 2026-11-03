@@ -1,0 +1,30 @@
+# Pinned to the newest release Traefik supports (see #96), not upstream's latest.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: gateway-api
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://github.com/kubernetes-sigs/gateway-api
+  ref:
+    tag: v1.6.3
+  ignore: |
+    /*
+    !/config/crd/standard/
+---
+# prune: false so removing this can never delete the CRDs, and every route with them.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gateway-api
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./config/crd/standard
+  prune: false
+  wait: true
+  timeout: 2m
+  sourceRef:
+    kind: GitRepository
+    name: gateway-api
