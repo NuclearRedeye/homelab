@@ -6,6 +6,9 @@ metadata:
 stringData:
     METALLB_POOL: ENC[AES256_GCM,data:HeChzT1OwB/idTk9ijREvQ==,iv:JXgVUmdtS6X2W+Cxuk4vAdqr5w4R/bfsx0eaeoXqLbI=,tag:226AAKglUdU3DdL8o2IU+w==,type:str]
     TRAEFIK_IP: ENC[AES256_GCM,data:PRxCAT1N4WyTQrElCg==,iv:lC6LZWxXjPZl1pWOT9iA6RtIQFLt9QWAUYi4so4otHU=,tag:V+X3nTgiG1Lwm1f5DqEXKw==,type:str]
+    CYBERTRON_DOMAIN: ENC[AES256_GCM,data:osszSngy6ivPf4qg3TY=,iv:xSfeh87RIe+MY7bDqaxkPlEAlXAOinln++5Ep1mrib0=,tag:5YHc8YsTKpZj6jRWBPhhKg==,type:str]
+    JUNKION_DOMAIN: ENC[AES256_GCM,data:Fiwv086mFPBe,iv:qowOjPV8cNq7Y6nlJjJPES4xeljp08VWJ14frEmmp6I=,tag:1h/R4nz9mSRhyhMHCLHDyA==,type:str]
+    QUINTESSA_DOMAIN: ENC[AES256_GCM,data:gzuLzqcWD9emVZyf,iv:d+qIpQpcKzsY9PYnNMTKgH2OTqGG1irRT4G+r4s+gic=,tag:IkYZRizQOwL6GVsMXvorww==,type:str]
 sops:
     age:
         - enc: |
@@ -27,6 +30,6 @@ sops:
             -----END AGE ENCRYPTED FILE-----
           recipient: age13e4686a0ynep9aml33c058nyxxjq3grhewa46cw5432neh0yaq4s9rgxlq
     encrypted_regex: ^(data|stringData)$
-    lastmodified: "2026-11-03T23:15:35Z"
-    mac: ENC[AES256_GCM,data:M08C7DkcXn/cCNn7fI1UGsABA9YG19jaKxdOXZ6fnIHOdxzO0TMvaussfr+HK/X94KuuAT3wMyP5C8/2mv4rLM3QCnXAn/1hmjsPBo8K+gBbmxXg/3+xDXXO7Zui+HBNcAYdw4ENzfR8DGBrKaxDZrGfgouFQ1RbOO1HXDdESus=,iv:c5HDZl5G/N/KMm7s5OOGsGhU7Yfvq/NeBBz2nAIgLDQ=,tag:Oo7ESYAhY6skifKMbw2dNw==,type:str]
+    lastmodified: "2026-11-04T18:03:58Z"
+    mac: ENC[AES256_GCM,data:9rI43QInf/WzFvwlx5Jm1NJl0T2ime0z8U26GMCS3ZeUt0dAaNMnaI3bapFAZMWxCSSqbIjiQqOKlHawXDkivZDxzOyKXw6GhI0OSAvF5WjleODGxIIhgrMQENw+o3BS0e0VVF0sokfs+owwle8gYAJRwqFH4MXD2zxlAI3Dv8I=,iv:bTIjtXilYWQYg5s/qgr/PzngdWXfYsjkuSWMWCdN3YU=,tag:Hx4pVCzafOdNc6inqRJ+PQ==,type:str]
     version: 3.13.3

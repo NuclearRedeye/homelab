@@ -1,0 +1,47 @@
+# Ports are Traefik's entry points (web :8000, websecure :8443), not the Service's 80/443.
+# TODO(#104): Move each domain's listener to a ListenerSet beside its Certificate once Traefik supports them (v3.8).
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: traefik
+  namespace: traefik
+spec:
+  gatewayClassName: traefik
+  listeners:
+  # Only the redirect attaches here, so apps can't serve plain HTTP.
+  - name: http
+    protocol: HTTP
+    port: 8000
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: https-cybertron
+    protocol: HTTPS
+    port: 8443
+    hostname: "*.${CYBERTRON_DOMAIN}"
+    tls:
+      certificateRefs:
+      - name: cybertron-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https-junkion
+    protocol: HTTPS
+    port: 8443
+    hostname: "*.${JUNKION_DOMAIN}"
+    tls:
+      certificateRefs:
+      - name: junkion-tls
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https-quintessa
+    protocol: HTTPS
+    port: 8443
+    hostname: "*.${QUINTESSA_DOMAIN}"
+    tls:
+      certificateRefs:
+      - name: quintessa-tls
+    allowedRoutes:
+      namespaces:
+        from: All

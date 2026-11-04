@@ -19,3 +19,28 @@ spec:
     substituteFrom:
     - kind: Secret
       name: cluster-settings
+---
+# Separate from the install so the GatewayClass and issuers exist first.
+# DNS-01 issuance takes a few minutes, hence the longer timeout.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: traefik-config
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./kubernetes/apps/traefik/config
+  prune: true
+  wait: true
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+  - name: traefik
+  - name: cert-manager-config
+  - name: settings
+  postBuild:
+    substituteFrom:
+    - kind: Secret
+      name: cluster-settings
