@@ -10,7 +10,7 @@ Finding, adding and removing the domains the cluster serves. Each domain has a c
 ## When Not to Use
 
 - A certificate won't issue or renew for a domain that's already set up. That's a cert-manager problem; start with `kubectl describe certificate -n traefik <codename>`.
-- You're adding a hostname under an existing domain. The wildcard already covers it; only an `HTTPRoute` is needed.
+- You're adding a hostname one level under an existing domain, like `app.<domain>`. The wildcard certificate already covers it; only an `HTTPRoute` is needed. A deeper name like `app.team.<domain>` isn't covered: the listener still accepts it, but clients get a certificate error, so it needs its own `Certificate`.
 
 ## Before You Start
 
@@ -46,21 +46,28 @@ Each line reads `CYBERTRON_DOMAIN: <real domain>`. The codename is used, lowerca
 ### Remove a Domain
 
 1. Find its codename using Look Up a Codename.
-2. Remove its `Certificate` from `certificates.yaml` and its listener from `gateway.yaml`, then its placeholder from `validate.sh`.
-3. Remove the setting:
+2. Find every `HTTPRoute` that uses the domain, then move each one to another domain or remove it. Otherwise its app goes offline when the listener does.
+
+   ```sh
+   grep -rln -e '<CODENAME>_DOMAIN' -e 'https-<codename>' kubernetes/apps
+   ```
+
+   Good output lists only `kubernetes/apps/traefik/config/` files, which the next steps edit.
+3. Remove its `Certificate` from `certificates.yaml` and its listener from `gateway.yaml`, then its placeholder from `validate.sh`.
+4. Remove the setting:
 
    ```sh
    sops unset kubernetes/settings/app/settings.sops.yaml '["stringData"]["<CODENAME>_DOMAIN"]'
    ```
 
-4. Run `kubernetes/validate.sh`, then open a PR, and merge it.
-5. Delete the leftover certificate Secret. cert-manager doesn't delete it when Flux prunes the `Certificate`:
+5. Run `kubernetes/validate.sh`, then open a PR, and merge it.
+6. Delete the leftover certificate Secret. cert-manager doesn't delete it when Flux prunes the `Certificate`:
 
    ```sh
    kubectl delete secret -n traefik <codename>-tls
    ```
 
-6. Remove the domain's `address=` entry from the router's dnsmasq, and its zone from the Cloudflare API token.
+7. Remove the domain's `address=` entry from the router's dnsmasq, and its zone from the Cloudflare API token.
 
 ## Verify
 
