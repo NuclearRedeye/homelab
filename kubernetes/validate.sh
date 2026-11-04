@@ -23,12 +23,26 @@ curl -sSfL "https://github.com/fluxcd/flux2/releases/download/${version}/crd-sch
 crd_catalog_ref=27233a506de0085e71c7f9702597806a7f95eb24
 crd_catalog="https://raw.githubusercontent.com/datreeio/CRDs-catalog/${crd_catalog_ref}/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
 
+# Placeholders for cluster-settings, so substituted fields still validate.
+# Add one per key in settings.sops.yaml; --strict fails on any that are missing.
+export METALLB_POOL=192.168.0.1/16
+export TRAEFIK_IP=192.168.0.1
+export CYBERTRON_DOMAIN=example.com
+export JUNKION_DOMAIN=example.net
+export QUINTESSA_DOMAIN=example.org
+
+# Only apps are substituted, as Flux does; gotk-components.yaml has a literal ${var}.
+substitute() {
+  if [[ "$1" == ./apps/* ]]; then flux envsubst --strict; else cat; fi
+}
+
 # Secrets are skipped as their sops metadata fails strict validation, and CRDs
 # as upstream ships them and no schema exists. Unknown kinds still fail.
 find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
   dir=$(dirname "$file")
   echo "Validating $dir"
   kustomize build "$dir" \
+    | substitute "$dir" \
     | kubeconform -strict -summary -skip Secret,CustomResourceDefinition \
         -schema-location default -schema-location "$schemas" \
         -schema-location "$crd_catalog"
