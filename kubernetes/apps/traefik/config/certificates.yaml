@@ -1,0 +1,42 @@
+# Codenames stand in for the real domains; see docs/runbooks/homelab-domains.md.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cybertron
+  namespace: traefik
+spec:
+  secretName: cybertron-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-staging
+  dnsNames:
+  - ${CYBERTRON_DOMAIN}
+  - "*.${CYBERTRON_DOMAIN}"
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: junkion
+  namespace: traefik
+spec:
+  secretName: junkion-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-staging
+  dnsNames:
+  - ${JUNKION_DOMAIN}
+  - "*.${JUNKION_DOMAIN}"
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: quintessa
+  namespace: traefik
+spec:
+  secretName: quintessa-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-staging
+  dnsNames:
+  - ${QUINTESSA_DOMAIN}
+  - "*.${QUINTESSA_DOMAIN}"
