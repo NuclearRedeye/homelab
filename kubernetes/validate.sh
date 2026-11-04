@@ -31,7 +31,8 @@ export CYBERTRON_DOMAIN=example.com
 export JUNKION_DOMAIN=example.net
 export QUINTESSA_DOMAIN=example.org
 
-# Only apps are substituted, as Flux does; gotk-components.yaml has a literal ${var}.
+# Approximates Flux: substitutes all of apps/, though Flux only does so where a
+# Kustomization has substituteFrom. gotk-components.yaml has a literal ${var}.
 substitute() {
   if [[ "$1" == ./apps/* ]]; then flux envsubst --strict; else cat; fi
 }
