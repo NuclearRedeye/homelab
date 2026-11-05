@@ -8,7 +8,7 @@ spec:
   secretName: cybertron-tls
   issuerRef:
     kind: ClusterIssuer
-    name: letsencrypt-staging
+    name: letsencrypt-production
   dnsNames:
   - ${CYBERTRON_DOMAIN}
   - "*.${CYBERTRON_DOMAIN}"
@@ -22,7 +22,7 @@ spec:
   secretName: junkion-tls
   issuerRef:
     kind: ClusterIssuer
-    name: letsencrypt-staging
+    name: letsencrypt-production
   dnsNames:
   - ${JUNKION_DOMAIN}
   - "*.${JUNKION_DOMAIN}"
@@ -36,7 +36,7 @@ spec:
   secretName: quintessa-tls
   issuerRef:
     kind: ClusterIssuer
-    name: letsencrypt-staging
+    name: letsencrypt-production
   dnsNames:
   - ${QUINTESSA_DOMAIN}
   - "*.${QUINTESSA_DOMAIN}"
