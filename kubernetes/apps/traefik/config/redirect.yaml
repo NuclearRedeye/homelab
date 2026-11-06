@@ -4,6 +4,9 @@ kind: HTTPRoute
 metadata:
   name: https-redirect
   namespace: traefik
+  # Only redirects to HTTPS; each HTTPS route does its own auth.
+  annotations:
+    homelab/public: "true"
 spec:
   parentRefs:
   - name: traefik
