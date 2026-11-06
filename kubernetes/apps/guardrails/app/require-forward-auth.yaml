@@ -1,0 +1,36 @@
+# Fails closed: a route is served without a login only if it says so.
+# See docs/adr/0004-per-route-auth-enforced-by-admission.md.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: require-forward-auth
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups: ["gateway.networking.k8s.io"]
+      apiVersions: ["*"]
+      operations: ["CREATE", "UPDATE"]
+      resources: ["httproutes"]
+  validations:
+  - expression: >-
+      (has(object.metadata.annotations) &&
+      'homelab/public' in object.metadata.annotations &&
+      object.metadata.annotations['homelab/public'] == 'true') ||
+      (has(object.spec.rules) && object.spec.rules.all(r,
+      has(r.filters) && r.filters.exists(f,
+      f.type == 'ExtensionRef' &&
+      f.extensionRef.group == 'traefik.io' &&
+      f.extensionRef.kind == 'Middleware' &&
+      f.extensionRef.name == 'forward-auth')))
+    message: >-
+      Every rule needs the forward-auth Middleware as an ExtensionRef filter,
+      or annotate the route homelab/public=true.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: require-forward-auth
+spec:
+  policyName: require-forward-auth
+  validationActions: [Deny]
