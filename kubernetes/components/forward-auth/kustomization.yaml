@@ -1,0 +1,6 @@
+# Include from each app that serves an HTTPRoute; an ExtensionRef can't cross
+# namespaces (docs/adr/0004-per-route-auth-enforced-by-admission.md).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+- middleware.yaml

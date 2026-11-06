@@ -31,15 +31,15 @@ export CYBERTRON_DOMAIN=example.com
 export JUNKION_DOMAIN=example.net
 export QUINTESSA_DOMAIN=example.org
 
-# Flux leaves a missing setting empty, so every ${VAR} in apps/ must be a real key.
-for var in $(grep -rhoE '\$\{[A-Z0-9_]+\}' apps | tr -d '${}' | sort -u); do
+# Flux leaves a missing setting empty, so every ${VAR} in apps/ and components/ must be a real key.
+for var in $(grep -rhoE '\$\{[A-Z0-9_]+\}' apps components | tr -d '${}' | sort -u); do
   grep -qE "^[[:space:]]*$var:" settings/app/settings.sops.yaml || { echo "no setting for \${$var}" >&2; exit 1; }
 done
 
-# Approximates Flux: substitutes all of apps/, though Flux only does so where a
+# Approximates Flux: substitutes all of apps/ and components/, though Flux only does so where a
 # Kustomization has substituteFrom. gotk-components.yaml has a literal ${var}.
 substitute() {
-  if [[ "$1" == ./apps/* ]]; then flux envsubst --strict; else cat; fi
+  if [[ "$1" == ./apps/* || "$1" == ./components/* ]]; then flux envsubst --strict; else cat; fi
 }
 
 # Secrets are skipped as their sops metadata fails strict validation, and CRDs
