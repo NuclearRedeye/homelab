@@ -1,0 +1,14 @@
+# TODO(#113): Points at the Compose host's Authelia; repoint once Authelia moves into the cluster.
+# authelia_url is needed as the Compose Authelia's session config doesn't set one.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forward-auth
+spec:
+  forwardAuth:
+    address: https://auth.${CYBERTRON_DOMAIN}/api/authz/forward-auth?authelia_url=https://auth.${CYBERTRON_DOMAIN}/
+    authResponseHeaders:
+    - Remote-User
+    - Remote-Groups
+    - Remote-Email
+    - Remote-Name
