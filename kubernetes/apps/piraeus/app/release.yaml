@@ -1,0 +1,13 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: piraeus
+  namespace: piraeus-datastore
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: piraeus
+  values:
+    # The chart templates its CRDs rather than using crds/, so upgrades update them.
+    installCRDs: true
