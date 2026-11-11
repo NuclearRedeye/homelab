@@ -9,4 +9,5 @@ resources:
 - apps/gateway-api/ks.yaml
 - apps/guardrails/ks.yaml
 - apps/metallb/ks.yaml
+- apps/piraeus/ks.yaml
 - apps/traefik/ks.yaml

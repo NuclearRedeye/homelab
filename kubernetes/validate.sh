@@ -44,12 +44,14 @@ substitute() {
 
 # Secrets are skipped as their sops metadata fails strict validation, and CRDs
 # as upstream ships them and no schema exists. Unknown kinds still fail.
+# HACK(#132): The catalog's Piraeus schemas don't compile; skip them until datreeio/CRDs-catalog#1012 merges.
+skip=Secret,CustomResourceDefinition,LinstorCluster,LinstorSatelliteConfiguration
 find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
   dir=$(dirname "$file")
   echo "Validating $dir"
   kustomize build "$dir" \
     | substitute "$dir" \
-    | kubeconform -strict -summary -skip Secret,CustomResourceDefinition \
+    | kubeconform -strict -summary -skip "$skip" \
         -schema-location default -schema-location "$schemas" \
         -schema-location "$crd_catalog"
 done
