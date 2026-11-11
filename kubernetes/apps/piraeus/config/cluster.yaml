@@ -3,6 +3,10 @@ kind: LinstorCluster
 metadata:
   name: linstorcluster
 spec:
+  # No overcommit: promised volume sizes can't exceed the pool.
+  properties:
+  - name: MaxOversubscriptionRatio
+    value: "1"
   internalTLS:
     certManager:
       name: linstor-internal-ca
