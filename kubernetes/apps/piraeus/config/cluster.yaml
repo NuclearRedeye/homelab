@@ -11,3 +11,12 @@ spec:
     certManager:
       name: linstor-internal-ca
       kind: Issuer
+  # Replaces the operator's JAVA_OPTS, so its TLS flag must stay. Sizes from #121.
+  controller:
+    podTemplate:
+      spec:
+        containers:
+        - name: linstor-controller
+          env:
+          - name: JAVA_OPTS
+            value: -Djdk.tls.acknowledgeCloseNotify=true -Xmx512m -XX:+ExitOnOutOfMemoryError

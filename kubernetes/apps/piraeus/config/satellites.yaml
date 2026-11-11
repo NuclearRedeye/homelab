@@ -29,3 +29,17 @@ spec:
       initContainers:
       - name: drbd-module-loader
         $patch: delete
+---
+# Replaces the operator's JAVA_OPTS, so its TLS flag must stay. Sizes from #121.
+apiVersion: piraeus.io/v1
+kind: LinstorSatelliteConfiguration
+metadata:
+  name: heap
+spec:
+  podTemplate:
+    spec:
+      containers:
+      - name: linstor-satellite
+        env:
+        - name: JAVA_OPTS
+          value: -Djdk.tls.acknowledgeCloseNotify=true -Xmx256m -XX:+ExitOnOutOfMemoryError
