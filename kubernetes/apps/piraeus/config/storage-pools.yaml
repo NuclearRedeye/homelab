@@ -1,0 +1,51 @@
+# One per node, as each 850 EVO has its own serial. LINSTOR's lvcreate always uses 100%FREE.
+apiVersion: piraeus.io/v1
+kind: LinstorSatelliteConfiguration
+metadata:
+  name: storage-pool-snarl
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: snarl
+  storagePools:
+  - name: thin
+    lvmThinPool:
+      logicalVolumeCreateArguments:
+      - --chunksize=64k
+      - --poolmetadatasize=1G
+    source:
+      hostDevices:
+      - /dev/disk/by-id/ata-Samsung_SSD_850_EVO_120GB_S21UNXAH101393P
+---
+apiVersion: piraeus.io/v1
+kind: LinstorSatelliteConfiguration
+metadata:
+  name: storage-pool-slag
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: slag
+  storagePools:
+  - name: thin
+    lvmThinPool:
+      logicalVolumeCreateArguments:
+      - --chunksize=64k
+      - --poolmetadatasize=1G
+    source:
+      hostDevices:
+      - /dev/disk/by-id/ata-Samsung_SSD_850_EVO_120GB_S21UNXAH101373A
+---
+apiVersion: piraeus.io/v1
+kind: LinstorSatelliteConfiguration
+metadata:
+  name: storage-pool-swoop
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: swoop
+  storagePools:
+  - name: thin
+    lvmThinPool:
+      logicalVolumeCreateArguments:
+      - --chunksize=64k
+      - --poolmetadatasize=1G
+    source:
+      hostDevices:
+      - /dev/disk/by-id/ata-Samsung_SSD_850_EVO_120GB_S21UNXAH101489A

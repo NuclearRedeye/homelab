@@ -4,3 +4,5 @@ resources:
 - tls.yaml
 - cluster.yaml
 - satellites.yaml
+- storage-pools.yaml
+- storageclass.yaml

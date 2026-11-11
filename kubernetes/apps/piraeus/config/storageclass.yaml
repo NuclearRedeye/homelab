@@ -1,0 +1,13 @@
+# Not the default; k3s's local-path stays default until decided otherwise.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: linstor-replicated
+provisioner: linstor.csi.linbit.com
+parameters:
+  linstor.csi.linbit.com/storagePool: thin
+  linstor.csi.linbit.com/placementCount: "3"
+  csi.storage.k8s.io/fstype: ext4
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Retain
