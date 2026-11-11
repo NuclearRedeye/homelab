@@ -1,0 +1,31 @@
+apiVersion: piraeus.io/v1
+kind: LinstorSatelliteConfiguration
+metadata:
+  name: internal-tls
+spec:
+  internalTLS:
+    certManager:
+      name: linstor-internal-ca
+      kind: Issuer
+---
+# Replicate on the node IPs, which k3s puts on the cluster VLAN. Switching back needs reboots.
+apiVersion: piraeus.io/v1
+kind: LinstorSatelliteConfiguration
+metadata:
+  name: host-network
+spec:
+  podTemplate:
+    spec:
+      hostNetwork: true
+---
+# NixOS provides DRBD 9 and the dm-* modules (nixos/modules/drbd.nix).
+apiVersion: piraeus.io/v1
+kind: LinstorSatelliteConfiguration
+metadata:
+  name: no-loader
+spec:
+  podTemplate:
+    spec:
+      initContainers:
+      - name: drbd-module-loader
+        $patch: delete
