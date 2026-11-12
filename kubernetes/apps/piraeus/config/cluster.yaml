@@ -19,4 +19,4 @@ spec:
         - name: linstor-controller
           env:
           - name: JAVA_OPTS
-            value: -Djdk.tls.acknowledgeCloseNotify=true -Xmx512m -XX:+ExitOnOutOfMemoryError
+            value: -Djdk.tls.acknowledgeCloseNotify=true -Xmx512m
