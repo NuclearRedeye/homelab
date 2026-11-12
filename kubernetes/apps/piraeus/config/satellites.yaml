@@ -42,4 +42,4 @@ spec:
       - name: linstor-satellite
         env:
         - name: JAVA_OPTS
-          value: -Djdk.tls.acknowledgeCloseNotify=true -Xmx256m -XX:+ExitOnOutOfMemoryError
+          value: -Djdk.tls.acknowledgeCloseNotify=true -Xmx256m
