@@ -1,0 +1,9 @@
+# Upstream publishes no OCI chart, only this HTTPS repository.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: kube-vip
+  namespace: kube-vip
+spec:
+  interval: 1h
+  url: https://kube-vip.github.io/helm-charts

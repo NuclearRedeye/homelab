@@ -1,0 +1,9 @@
+# kube-vip needs host networking, NET_ADMIN to add the VIP and NET_RAW for ARP.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-vip
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
