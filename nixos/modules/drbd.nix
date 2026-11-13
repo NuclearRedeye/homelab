@@ -5,14 +5,15 @@
   boot.kernelModules = [
     "drbd"
     "drbd_transport_tcp"
-    "dm_thin_pool"
-    "dm_snapshot"
     "dm_crypt"
     "dm_cache"
     "dm_writecache"
     "loop"
   ];
   boot.extraModprobeConfig = "options drbd usermode_helper=disabled";
+
+  # Loads dm-thin-pool in the initrd and adds thin_check, so LVM activates the pool at boot (#141)
+  services.lvm.boot.thin.enable = true;
 
   # Discards pass through ext4 and DRBD to the thin pool
   services.fstrim.enable = true;
