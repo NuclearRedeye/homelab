@@ -8,6 +8,7 @@ resources:
 - apps/cert-manager/ks.yaml
 - apps/gateway-api/ks.yaml
 - apps/guardrails/ks.yaml
+- apps/kube-vip/ks.yaml
 - apps/metallb/ks.yaml
 - apps/piraeus/ks.yaml
 - apps/traefik/ks.yaml

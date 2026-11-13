@@ -27,6 +27,7 @@ crd_catalog="https://raw.githubusercontent.com/datreeio/CRDs-catalog/${crd_catal
 # Add one per key in settings.sops.yaml; --strict fails on any that are missing.
 export METALLB_POOL=192.168.0.1/16
 export TRAEFIK_IP=192.168.0.1
+export API_VIP=192.168.0.2
 export CYBERTRON_DOMAIN=example.com
 export JUNKION_DOMAIN=example.net
 export QUINTESSA_DOMAIN=example.org

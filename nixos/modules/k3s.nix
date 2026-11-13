@@ -9,6 +9,9 @@
     package = pkgs.k3s_1_36;
     tokenFile = config.sops.secrets.k3s_token.path;
 
+    # Rendered at boot so the API VIP stays out of this public repo
+    configPath = config.sops.templates."k3s.yaml".path;
+
     # Cluster traffic (etcd, kubelet, flannel) uses the cluster VLAN
     nodeIP = (lib.head config.networking.interfaces.cluster.ipv4.addresses).address;
 
@@ -22,10 +25,20 @@
       # Encrypt Secrets at rest in etcd; secretbox over the aescbc default
       "--secrets-encryption"
       "--secrets-encryption-provider=secretbox"
-
-      # Keep the hostname valid for kubectl over the LAN
-      "--tls-san=${config.networking.hostName}"
     ];
+  };
+
+  sops.secrets.api_vip.sopsFile = ../../secrets/k3s.yaml;
+
+  # Hostname and VIP stay valid for kubectl over the LAN. In the file, not as
+  # --tls-san flags, which would replace its whole list.
+  sops.templates."k3s.yaml" = {
+    content = ''
+      tls-san:
+        - ${config.networking.hostName}
+        - ${config.sops.placeholder.api_vip}
+    '';
+    restartUnits = [ "k3s.service" ];
   };
 
   # The API is open to the LAN for kubectl

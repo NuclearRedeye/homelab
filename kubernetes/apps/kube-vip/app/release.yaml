@@ -1,0 +1,34 @@
+# Control plane only: MetalLB keeps LoadBalancer Services. See docs/adr/0002-metallb-l2-for-load-balancers.md
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-vip
+  namespace: kube-vip
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: kube-vip
+      version: 0.11.2
+      sourceRef:
+        kind: HelmRepository
+        name: kube-vip
+  values:
+    config:
+      address: ${API_VIP}
+    env:
+      # The LAN NIC, so the VIP is never announced on the unrouted cluster VLAN
+      vip_interface: enp0s25
+      vip_arp: "true"
+      vip_subnet: "32"
+      port: "6443"
+      cp_enable: "true"
+      cp_namespace: kube-vip
+      vip_leaderelection: "true"
+      svc_enable: "false"
+      # Failover only; IPVS balancing across servers isn't needed
+      lb_enable: "false"
+      # Nothing scrapes it yet, so don't listen on the host network
+      prometheus_server: ""
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
