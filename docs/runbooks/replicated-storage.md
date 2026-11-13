@@ -124,7 +124,7 @@ A drain or clean reboot needs nothing. A power loss or hang does: the HA Control
    kubectl taint node <node> node.kubernetes.io/out-of-service=nodeshutdown:NoExecute-
    ```
 
-4. Check every replica returns to `UpToDate`. A replica that missed writes catches up from the others. While the app keeps writing, DRBD holds a resync to about 250KB/s so the app comes first, so a busy volume can take a long time.
+4. Check every replica returns to `UpToDate`. A replica that missed writes catches up from the others. While the app keeps writing, DRBD holds a resync to about 10MB/s so the app comes first, under two minutes per GiB to catch up.
 5. If LINSTOR refuses to place a volume on the node with "Not enough free space", and `lin storage-pool list` shows its `thin` pool at 0 KiB free, refresh the node using `lin node reconnect <node>`.
 
 LINSTOR never evicts an offline node's replicas by itself (the operator disables it), so a node that's away for hours or days catches up when it returns.

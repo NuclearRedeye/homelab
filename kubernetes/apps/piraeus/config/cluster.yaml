@@ -7,6 +7,9 @@ spec:
   properties:
   - name: MaxOversubscriptionRatio
     value: "1"
+  # KiB/s. Resync floor while apps write: 10MiB/s is under a tenth of the shared 1GbE port (#140).
+  - name: DrbdOptions/PeerDevice/c-min-rate
+    value: "10240"
   internalTLS:
     certManager:
       name: linstor-internal-ca
