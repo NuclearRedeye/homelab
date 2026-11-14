@@ -17,15 +17,9 @@ Inspecting and recovering volumes on the `linstor-replicated` StorageClass. Each
 
 - Run `kubectl` from the dev shell. If the server your kubeconfig points at is down, add `--server https://<host>:6443` for one that's up.
 - Have ssh and sudo on each node.
-- The hosts have no DRBD tools: `drbdadm` and `drbdsetup` live in each node's satellite container. Define these helpers, and find the volume's resource name from its claim...
+- The hosts have no DRBD tools: `drbdadm` and `drbdsetup` live in each node's satellite container. The dev shell defines two helpers: `lin <args>` runs `linstor` in the controller, and `drbd <node> <command>` runs a command in that node's satellite. Find the volume's resource name from its claim...
 
   ```sh
-  lin() { kubectl -n piraeus-datastore exec deploy/linstor-controller -- linstor "$@"; }
-  drbd() {
-    kubectl -n piraeus-datastore exec -c linstor-satellite \
-      "$(kubectl -n piraeus-datastore get pods -l app.kubernetes.io/component=linstor-satellite \
-           --field-selector spec.nodeName="$1" -o name)" -- "${@:2}"
-  }
   R=$(kubectl -n <namespace> get pvc <claim> -o jsonpath='{.spec.volumeName}')
   ```
 

@@ -74,6 +74,14 @@
 
               # A short prompt that makes it obvious when you're inside the dev shell.
               PS1='[\[\e[1;34m\]nix\[\e[0m\]:\[\e[1;32m\]homelab\[\e[0m\]] \W \$ '
+
+              # The hosts have no LINSTOR or DRBD tools. See docs/runbooks/replicated-storage.md
+              lin() { kubectl -n piraeus-datastore exec deploy/linstor-controller -- linstor "$@"; }
+              drbd() {
+                kubectl -n piraeus-datastore exec -c linstor-satellite \
+                  "$(kubectl -n piraeus-datastore get pods -l app.kubernetes.io/component=linstor-satellite \
+                       --field-selector spec.nodeName="$1" -o name)" -- "''${@:2}"
+              }
             ''
             # nixos-rebuild budgets its ssh ControlPath against Linux's
             # 107-byte socket limit, but darwin's is 103. A nix shell TMPDIR
