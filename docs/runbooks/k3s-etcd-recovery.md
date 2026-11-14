@@ -15,7 +15,7 @@ Recovering the k3s cluster after a node's hardware fails, quorum is lost, or dat
 
 ## Before You Start
 
-- Run `kubectl` from the dev shell. If the server your kubeconfig points at is down, add `--server https://<host>:6443` for one that's up. Find the current one using...
+- Run `kubectl` from the dev shell, with your kubeconfig pointed at the API VIP (`API_VIP` in `cluster-settings`). kube-vip moves it to a node that's up. If it doesn't answer, e.g. while etcd has lost quorum, add `--server https://<host>:6443` for a node that's up. Check which server it uses with...
 
   ```sh
   kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'
