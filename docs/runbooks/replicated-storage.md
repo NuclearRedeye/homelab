@@ -15,7 +15,7 @@ Inspecting and recovering volumes on the `linstor-replicated` StorageClass. Each
 
 ## Before You Start
 
-- Run `kubectl` from the dev shell. If the server your kubeconfig points at is down, add `--server https://<host>:6443` for one that's up.
+- Run `kubectl` from the dev shell, with your kubeconfig pointed at the API VIP (`API_VIP` in `cluster-settings`). kube-vip moves it to a node that's up. If it doesn't answer, e.g. while etcd has lost quorum, add `--server https://<host>:6443` for a node that's up.
 - Have ssh and sudo on each node.
 - The hosts have no DRBD tools: `drbdadm` and `drbdsetup` live in each node's satellite container. Define these helpers, and find the volume's resource name from its claim...
 
