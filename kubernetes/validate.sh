@@ -20,7 +20,7 @@ curl -sSfL "https://github.com/fluxcd/flux2/releases/download/${version}/crd-sch
 
 # Schemas for other custom resources, matched by API version. Pinned so results
 # match on every machine; Renovate bumps the commit.
-crd_catalog_ref=49729e49e8f062933e3716a26540d41b0cd0856c
+crd_catalog_ref=3e8a8916ca1b7af6464606c2c2f5869dbafa9653
 crd_catalog="https://raw.githubusercontent.com/datreeio/CRDs-catalog/${crd_catalog_ref}/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
 
 # Placeholders for cluster-settings, so substituted fields still validate.
