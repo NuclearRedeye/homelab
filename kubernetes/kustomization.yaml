@@ -12,3 +12,4 @@ resources:
 - apps/metallb/ks.yaml
 - apps/piraeus/ks.yaml
 - apps/traefik/ks.yaml
+- apps/volsync/ks.yaml
