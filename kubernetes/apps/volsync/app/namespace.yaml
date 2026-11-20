@@ -1,0 +1,9 @@
+# Controller only; mover pods run in each app's namespace under that namespace's level.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: volsync
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
