@@ -56,3 +56,21 @@ spec:
     name: flux-system
   dependsOn:
   - name: backup-spike-backup
+---
+# Added once the restore had finished, as only one node can use a DRBD volume at a time.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: backup-spike-verify
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./kubernetes/apps/backup-spike/verify
+  prune: true
+  wait: true
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+  - name: backup-spike-restore
