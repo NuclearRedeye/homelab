@@ -12,3 +12,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
+  # VolSync crash-loops at startup without the VolumeSnapshot CRDs, even when only cloning.
+  dependsOn:
+  - name: snapshot-crds
