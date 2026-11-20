@@ -1,0 +1,40 @@
+# Throwaway: proves VolSync backs up and restores a LINSTOR volume to the NAS (#162).
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: backup-spike
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./kubernetes/apps/backup-spike/app
+  prune: true
+  wait: true
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+  - name: piraeus-config
+---
+# Separate so the first backup only starts once the writer Job has completed.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: backup-spike-backup
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./kubernetes/apps/backup-spike/backup
+  prune: true
+  wait: true
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+  - name: backup-spike
+  - name: volsync
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age

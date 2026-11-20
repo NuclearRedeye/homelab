@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: known-hosts
+    namespace: backup-spike
+stringData:
+    known_hosts: ENC[AES256_GCM,data:vqBCE+Hyb4mWqCbwew4G/esUzr6pkTuOiATf4yXjqGi7BLJYFG5Ij2IOn1PpQ0T2J5klX20UtWMZ6I4KplSVy0v6cYhZ1RBIUo75hOCy2gLOVwB/qW2brPGGQl08W1U=,iv:6qNwttIuzDmDUKxPsns2PtziWLDeopa3Lvum1oeR0R4=,tag:MUvDEDFf43BwprRYLPcd7A==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB6SVFWTzJMS0h3UTk1aDNB
+            SDhRSXM1RmN6S1pYMDhIWkJ3L05JL3FaS0hBClRBRWtPeDA4SW1CbEpHbkZmRjkv
+            NjgrWjdPYUZ5OEE3bzB4KzFCVE9kWTgKLS0tIGV3UVNUVlJhRm9rbDRWYm1MWGJ2
+            c0loODdUQjJSL042Qmg5d1JjYjlVMmsK63D07iW/B9VB6Z+FQSI/GD4YG8fPstEu
+            WI0ZcG/J+B4qt7erh9j8lPORNcScJEj2SRbWf7oO38fWSIYkCbXQ3Q==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age14h7wk9623cjgfvzx7lglztuwfftjmkufgmte88qs3rddmcw9aekqzav60f
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB4UzhoUVUxY1hqMlh2dFAy
+            TjVRanZtQ3Zqejl4czZDT3VZbERBaHdhU2xZCkljaElVNHQwQ2VJWHV4eFh5VHZi
+            NG00dXh4bWJjQVAvOEM5ZGczKzRUQjQKLS0tIHZTT0tyL2tPb0xMZnhtM1hId3o4
+            QjRjVElRUVk3c1JqSklzN2pZM0hGWlUKMindBruyCvOzEmKmJSbObKMnj7vWUaEN
+            YKucTEQTLBVnCuPvPhDavYxcvLHiM/YJ8bZj2frLoHE4+7zxP4pMxQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age13e4686a0ynep9aml33c058nyxxjq3grhewa46cw5432neh0yaq4s9rgxlq
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-20T16:39:54Z"
+    mac: ENC[AES256_GCM,data:JuiX0nQ67Cf8euKS25wB3CNsW/f8wntPtdSpSFMdHWYJRYhLt0nwCr3kDE5WJjbaJC39QnvdIXHlmxkM4PCB7wDiBnEIVp0Lw9WJu+BLvA/dAjQWtMpff35vPoBP3uFmIiBXXj0XKBHCIvkrfAoqcpcL5v+ajOs0JIXGOdinowc=,iv:5lc9INLBRsOn0Gjssu7r3l9HfTsVfT8n3yvViCy5A6Y=,tag:uZ96zqbssV1cOZPrv9PjAQ==,type:str]
+    version: 3.13.3
