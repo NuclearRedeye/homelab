@@ -12,5 +12,6 @@ resources:
 - apps/kube-vip/ks.yaml
 - apps/metallb/ks.yaml
 - apps/piraeus/ks.yaml
+- apps/snapshot-crds/ks.yaml
 - apps/traefik/ks.yaml
 - apps/volsync/ks.yaml
