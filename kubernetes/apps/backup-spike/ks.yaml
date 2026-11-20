@@ -38,3 +38,21 @@ spec:
     provider: sops
     secretRef:
       name: sops-age
+---
+# Restores the backup into a new PVC, to compare against the original.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: backup-spike-restore
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./kubernetes/apps/backup-spike/restore
+  prune: true
+  wait: true
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+  - name: backup-spike-backup

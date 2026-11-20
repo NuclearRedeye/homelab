@@ -1,0 +1,27 @@
+# Direct into an existing PVC; the default Snapshot method needs a snapshot controller (#135).
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationDestination
+metadata:
+  name: restored
+  namespace: backup-spike
+spec:
+  trigger:
+    manual: first
+  restic:
+    repository: data-restic
+    copyMethod: Direct
+    destinationPVC: restored
+    cacheStorageClassName: linstor-volsync
+    cleanupCachePVC: true
+    moverSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    moverVolumes:
+    - mountPath: ssh
+      volumeSource:
+        secret:
+          secretName: known-hosts
