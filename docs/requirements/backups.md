@@ -18,8 +18,8 @@ The backup system shall back up each service's data at least every 24 hours, or 
 - Status: proposed
 
 ## BAK-004 Retention
-The backup system shall keep 7 daily, 4 weekly and 6 monthly backups of each service at each target.
-- Verify: after pruning, list a service's backups and count by age.
+The backup system shall keep 7 daily, 4 weekly and 6 monthly backups of each service at each target, except backups of a suspended service and archived backups, which are kept until deleted.
+- Verify: after pruning, list a service's backups and count by age; a suspended service and an archived backup lose none.
 - Status: proposed
 
 ## BAK-005 Incremental backups
