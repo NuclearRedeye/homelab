@@ -1,6 +1,6 @@
 # Backup requirements
 
-How the persistent data of services defined and managed in this repo is backed up and proven restorable, wherever they run. Anything that can be rebuilt from this repo is out of scope.
+How the persistent data of services defined and managed in this repo is backed up and proven restorable, wherever they run. Hosts and the cluster are rebuilt from this repo, so only service data is backed up. Anything else needed to recover is kept outside the system and documented.
 
 ## BAK-001 Back up by default
 The backup system shall back up the persistent data of every service defined in this repo, unless the service opts out with a reason.
@@ -23,8 +23,8 @@ The backup system shall keep 7 daily, 4 weekly and 6 monthly backups of each ser
 - Status: proposed
 
 ## BAK-005 Incremental backups
-The backup system shall store only data that changed since the previous backup.
-- Verify: back up unchanged data twice; the second run adds almost nothing to the target.
+The backup system shall store only data not already held at the target, so unchanged files and repeated content are stored once.
+- Verify: back up unchanged data twice, then a copy of an existing file; neither run adds more than a little to the target.
 - Status: proposed
 
 ## BAK-006 Encrypted backups
@@ -32,9 +32,9 @@ The backup system shall encrypt backups before they leave the system being backe
 - Verify: files read straight from a target contain no plaintext from a known test file.
 - Status: proposed
 
-## BAK-007 Append-only
-Each target shall only allow backups to be added, with stored backups removed only by retention (BAK-004).
-- Verify: using the credentials that write backups, try to change and delete a backup at each target; both fail.
+## BAK-007 Recoverable deletes
+Each cloud target shall keep backups older than a week recoverable for at least 30 days after they are changed or deleted, including by the credentials that write backups.
+- Verify: using the credentials that write backups, delete a backup older than a week at each cloud target, then recover it.
 - Status: proposed
 
 ## BAK-008 Restore from nothing
