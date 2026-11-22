@@ -1,0 +1,33 @@
+# See docs/requirements/backups.md for the schedule (BAK-003) and retention (BAK-004).
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: ${VOLSYNC_CLAIM:=${APP}}-nas
+  namespace: ${APP}
+spec:
+  sourcePVC: ${VOLSYNC_CLAIM:=${APP}}
+  paused: ${VOLSYNC_PAUSED}
+  trigger:
+    schedule: "0 1 * * *"
+  restic:
+    repository: ${VOLSYNC_CLAIM:=${APP}}-volsync-nas
+    copyMethod: Clone
+    storageClassName: linstor-volsync
+    cacheStorageClassName: linstor-volsync
+    cacheCapacity: ${VOLSYNC_CACHE_CAPACITY:=1Gi}
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 6
+    moverSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    moverVolumes:
+    - mountPath: volsync-nas
+      volumeSource:
+        secret:
+          secretName: ${VOLSYNC_CLAIM:=${APP}}-volsync-nas-ssh

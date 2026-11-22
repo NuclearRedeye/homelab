@@ -1,0 +1,15 @@
+# Kept if the app is removed, so its data isn't lost with it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${VOLSYNC_CLAIM:=${APP}}
+  namespace: ${APP}
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes:
+  - ${VOLSYNC_ACCESSMODE:=ReadWriteOnce}
+  storageClassName: ${VOLSYNC_STORAGECLASS:=linstor-replicated}
+  resources:
+    requests:
+      storage: ${VOLSYNC_CAPACITY}
