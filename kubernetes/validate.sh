@@ -55,10 +55,12 @@ kustomizations=$(kustomize build . | yq -o=json -I=0 '
      "values": (.spec.postBuild.substitute // {})}')
 paths=$(jq -r .path <<<"$kustomizations")
 
-# Directories no Flux Kustomization points at, such as components, build as they are.
+# Directories no Flux Kustomization points at build as they are. Components need
+# an app's values, so they're checked through the apps that include them.
 find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
   dir=$(dirname "$file")
   grep -qxF "$dir" <<<"$paths" && continue
+  [[ $(yq '.kind' "$file") == Component ]] && continue
   echo "Validating $dir"
   kustomize build "$dir" | validate
 done
