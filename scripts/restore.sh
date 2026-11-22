@@ -12,6 +12,9 @@
 # the service still down.
 set -euo pipefail
 
+# shellcheck source=scripts/libs/volsync.sh
+source "$(dirname "$0")/libs/volsync.sh"
+
 usage() {
   sed -n '2,/^set /{/^#/s/^# \{0,1\}//p;}' "$0" >&2
   exit 2
@@ -36,27 +39,13 @@ if [[ -n $restore_point && ! $restore_point =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:
   exit 2
 fi
 
-# Each backed-up volume has its own Flux Kustomization using the component, which requires VOLSYNC_CAPACITY.
-volumes=$(kubectl -n flux-system get kustomizations -o json | jq -c --arg service "$service" '
-  [.items[] | (.spec.postBuild.substitute // {}) as $values
-   | select($values.APP == $service and $values.VOLSYNC_CAPACITY != null)
-   | {kustomization: .metadata.name, volume: ($values.VOLSYNC_CLAIM // $values.APP)}]')
-if [[ -z $volume ]]; then
-  case $(jq length <<<"$volumes") in
-    0) echo "$service has no backed-up volumes" >&2; exit 1 ;;
-    1) volume=$(jq -r '.[0].volume' <<<"$volumes") ;;
-    *) echo "$service has several volumes; choose one with --volume: $(jq -r 'map(.volume) | join(", ")' <<<"$volumes")" >&2; exit 2 ;;
-  esac
-fi
-kustomization=$(jq -er --arg volume "$volume" '.[] | select(.volume == $volume) | .kustomization' <<<"$volumes") \
-  || { echo "$service has no backed-up volume $volume" >&2; exit 1; }
+find_volume "$service" "$volume"
 namespace=$service claim=$volume
 rs_name=$claim-$source
 rs=$(kubectl -n "$namespace" get replicationsource "$rs_name" -o json) \
   || { echo "no ReplicationSource $namespace/$rs_name; is $source set up for $service?" >&2; exit 1; }
 # Every target's ReplicationSource for this volume, so none backs up mid-restore.
-sources=$(kubectl -n "$namespace" get replicationsources -o json \
-  | jq -r --arg claim "$claim" '.items[] | select(.spec.sourcePVC == $claim) | "replicationsource/" + .metadata.name')
+sources=$(replication_sources "$namespace" "$claim")
 
 cat <<EOF
 Service:        $service (Flux Kustomization $kustomization)
@@ -75,27 +64,8 @@ trap 'echo "stopped with $kustomization suspended; when done: flux resume kustom
 # shellcheck disable=SC2086 # one word per ReplicationSource
 kubectl -n "$namespace" patch $sources --type merge -p '{"spec":{"paused":true}}'
 
-# Scale down whatever is running with the volume mounted; a restore needs it to itself.
-pods=$(kubectl -n "$namespace" get pods -o json | jq -c --arg claim "$claim" '
-  [.items[] | select(.status.phase == "Running" or .status.phase == "Pending")
-   | select(any(.spec.volumes[]?; .persistentVolumeClaim.claimName == $claim))]')
-for owner in $(jq -r '.[].metadata.ownerReferences[]? | .kind + "/" + .name' <<<"$pods" | sort -u); do
-  case $owner in
-    ReplicaSet/*)
-      owner=$(kubectl -n "$namespace" get "$owner" -o jsonpath='{.metadata.ownerReferences[0].kind}/{.metadata.ownerReferences[0].name}') ;;
-  esac
-  case $owner in
-    Deployment/* | StatefulSet/*)
-      echo "Scaling down $owner"
-      kubectl -n "$namespace" scale "$owner" --replicas=0 ;;
-    *)
-      echo "$owner is using $claim; stop it, then run this again" >&2
-      exit 1 ;;
-  esac
-done
-for pod in $(jq -r '.[].metadata.name' <<<"$pods"); do
-  kubectl -n "$namespace" wait --for=delete "pod/$pod" --timeout=10m
-done
+# A restore needs the volume to itself.
+stop_claim_users "$namespace" "$claim"
 
 # Reuses the ReplicationSource's settings, so a restore matches how the backup was taken.
 trigger=restore-$(date -u +%Y%m%dT%H%M%SZ)
