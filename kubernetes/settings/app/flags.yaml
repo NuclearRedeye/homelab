@@ -1,0 +1,9 @@
+# Shared switches for postBuild.substituteFrom; plain, as nothing here is secret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-flags
+  namespace: flux-system
+data:
+  # Set "true" before rebuilding the cluster, so new, empty volumes aren't backed up.
+  VOLSYNC_PAUSED: "false"
