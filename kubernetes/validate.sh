@@ -18,11 +18,6 @@ mkdir -p "$schemas/master-standalone-strict"
 curl -sSfL "https://github.com/fluxcd/flux2/releases/download/${version}/crd-schemas.tar.gz" \
   | tar zxf - -C "$schemas/master-standalone-strict"
 
-# Schemas for other custom resources, matched by API version. Pinned so results
-# match on every machine; Renovate bumps the commit.
-crd_catalog_ref=3e8a8916ca1b7af6464606c2c2f5869dbafa9653
-crd_catalog="https://raw.githubusercontent.com/datreeio/CRDs-catalog/${crd_catalog_ref}/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
-
 # Placeholders for cluster-settings, so substituted fields still validate.
 # Add one per key in settings.sops.yaml; --strict fails on any that are missing.
 export METALLB_POOL=192.168.0.1/16
@@ -31,6 +26,9 @@ export API_VIP=192.168.0.2
 export CYBERTRON_DOMAIN=example.com
 export JUNKION_DOMAIN=example.net
 export QUINTESSA_DOMAIN=example.org
+
+# Schemas for other custom resources, built from the CRDs we deploy (#178).
+./crd-schemas.sh "$schemas/crds"
 
 # Flux leaves a missing setting empty, so every ${VAR} in apps/ and components/ must be a real key.
 for var in $(grep -rhoE '\$\{[A-Z0-9_]+\}' apps components | tr -d '${}' | sort -u); do
@@ -45,9 +43,7 @@ substitute() {
 
 # Secrets are skipped as their sops metadata fails strict validation, and CRDs
 # as upstream ships them and no schema exists. Unknown kinds still fail.
-# HACK(#132): The catalog's Piraeus schemas don't compile; skip them until datreeio/CRDs-catalog#1012 merges.
-# HACK(#178): The catalog's VolSync schemas predate moverVolumes; skip them until we build our own.
-skip=Secret,CustomResourceDefinition,LinstorCluster,LinstorSatelliteConfiguration,ReplicationSource,ReplicationDestination
+skip=Secret,CustomResourceDefinition
 find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
   dir=$(dirname "$file")
   echo "Validating $dir"
@@ -55,5 +51,5 @@ find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
     | substitute "$dir" \
     | kubeconform -strict -summary -skip "$skip" \
         -schema-location default -schema-location "$schemas" \
-        -schema-location "$crd_catalog"
+        -schema-location "$schemas/crds/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
 done
