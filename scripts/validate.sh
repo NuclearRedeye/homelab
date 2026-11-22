@@ -32,8 +32,9 @@ settings=$(sed -nE 's/^[[:space:]]+([A-Z0-9_]+):.*/\1/p' settings/app/settings.s
 flags=$(yq -o=json '.data' settings/app/flags.yaml)
 
 # Schemas for other custom resources, built from the CRDs we deploy (#178).
-env $(for var in "${!placeholders[@]}"; do echo "$var=${placeholders[$var]}"; done) \
-  ../scripts/crd-schemas.sh "$schemas/crds"
+placeholder_env=()
+for var in "${!placeholders[@]}"; do placeholder_env+=("$var=${placeholders[$var]}"); done
+env "${placeholder_env[@]}" ../scripts/crd-schemas.sh "$schemas/crds"
 
 # Secrets are skipped as their sops metadata fails strict validation, and CRDs
 # as upstream ships them and no schema exists. Unknown kinds still fail.
@@ -73,6 +74,7 @@ while IFS= read -r ks; do
   echo "Validating $path ($name)"
   build=$(kustomize build "$path")
   env=()
+  # shellcheck disable=SC2016 # strips the literal ${} characters, nothing to expand
   for var in $(grep -oE '\$\{[A-Z0-9_]+\}' <<<"$build" | tr -d '${}' | sort -u); do
     if value=$(jq -er --arg var "$var" '.values[$var] // empty' <<<"$ks"); then
       env+=("$var=$value")
