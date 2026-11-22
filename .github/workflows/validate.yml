@@ -95,4 +95,4 @@ jobs:
             experimental-features = nix-command flakes
 
       - name: Validate kubernetes/
-        run: nix develop -c kubernetes/validate.sh
+        run: nix develop -c scripts/validate.sh

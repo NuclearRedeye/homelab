@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Validates kubernetes/ as Flux will build it. Run inside the dev shell:
-#   nix develop -c kubernetes/validate.sh
+#   nix develop -c scripts/validate.sh
 # Based on fluxcd/flux2-kustomize-helm-example's scripts/validate.sh.
 set -euo pipefail
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../kubernetes"
 
 echo "Checking secrets are encrypted"
-find . -name '*.yaml' -print0 | xargs -0 ./check-encryption.sh
+find . -name '*.yaml' -print0 | xargs -0 ../scripts/check-encryption.sh
 
 # Schemas for the Flux version in the repo, not the CLI's, so Renovate bumps
 # validate against what will actually run.
@@ -33,7 +33,7 @@ flags=$(yq -o=json '.data' settings/app/flags.yaml)
 
 # Schemas for other custom resources, built from the CRDs we deploy (#178).
 env $(for var in "${!placeholders[@]}"; do echo "$var=${placeholders[$var]}"; done) \
-  ./crd-schemas.sh "$schemas/crds"
+  ../scripts/crd-schemas.sh "$schemas/crds"
 
 # Secrets are skipped as their sops metadata fails strict validation, and CRDs
 # as upstream ships them and no schema exists. Unknown kinds still fail.

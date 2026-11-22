@@ -77,7 +77,7 @@ The new namespace isn't annotated, so the guardrail protects it straight away. `
 
    Each file should report `synced with new keys`, adding the new key and removing the old one.
 3. Check each file still decrypts using `sops -d <file>`.
-4. Run `kubernetes/validate.sh`, then PR and merge.
+4. Run `scripts/validate.sh`, then PR and merge.
 
 ### Bootstrap
 

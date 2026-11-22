@@ -39,9 +39,9 @@ Each line reads `CYBERTRON_DOMAIN: <real domain>`. The codename is used, lowerca
    sops set kubernetes/settings/app/settings.sops.yaml '["stringData"]["<CODENAME>_DOMAIN"]' '"<domain>"'
    ```
 
-4. Add a placeholder to `kubernetes/validate.sh`, e.g. `export <CODENAME>_DOMAIN=<codename>.example`. Its `--strict` check fails without one.
+4. Add a placeholder to `scripts/validate.sh`, e.g. `export <CODENAME>_DOMAIN=<codename>.example`. Its `--strict` check fails without one.
 5. In `kubernetes/apps/traefik/config/`, copy an existing domain's `Certificate` in `certificates.yaml` and its `https-<codename>` listener in `gateway.yaml`, then rename them.
-6. Run `kubernetes/validate.sh`, then open a PR.
+6. Run `scripts/validate.sh`, then open a PR.
 
 ### Remove a Domain
 
@@ -60,7 +60,7 @@ Each line reads `CYBERTRON_DOMAIN: <real domain>`. The codename is used, lowerca
    sops unset kubernetes/settings/app/settings.sops.yaml '["stringData"]["<CODENAME>_DOMAIN"]'
    ```
 
-5. Run `kubernetes/validate.sh`, then open a PR, and merge it.
+5. Run `scripts/validate.sh`, then open a PR, and merge it.
 6. Delete the leftover certificate Secret. cert-manager doesn't delete it when Flux prunes the `Certificate`:
 
    ```sh

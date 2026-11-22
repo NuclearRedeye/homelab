@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Builds kubeconform schemas from the CRDs that apps/ deploys, at their pinned
+# Builds kubeconform schemas from the CRDs that kubernetes/apps/ deploys, at their pinned
 # versions, so a Renovate bump validates against what will actually run.
-#   nix develop -c kubernetes/crd-schemas.sh <out-dir>
+#   nix develop -c scripts/crd-schemas.sh <out-dir>
 # Writes <out-dir>/<group>/<kind>_<version>.json. Expects cluster-settings
 # placeholders in the environment, as validate.sh sets them.
 set -euo pipefail
 
 mkdir -p "$1"
 out=$(realpath "$1")
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../kubernetes"
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
@@ -75,7 +75,7 @@ git_crds() {
 # Writes one schema file per CRD version.
 to_schemas() {
   yq -o=json -I=0 'select(.kind == "CustomResourceDefinition")' \
-    | jq -c -f crd-to-schema.jq \
+    | jq -c -f ../scripts/crd-to-schema.jq \
     | while IFS= read -r entry; do
         local file
         file="$out/$(jq -r .file <<< "$entry")"
