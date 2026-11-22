@@ -29,6 +29,7 @@ declare -A placeholders=(
   [QUINTESSA_DOMAIN]=example.org
 )
 settings=$(sed -nE 's/^[[:space:]]+([A-Z0-9_]+):.*/\1/p' settings/app/settings.sops.yaml)
+flags=$(yq -o=json '.data' settings/app/flags.yaml)
 
 # Schemas for other custom resources, built from the CRDs we deploy (#178).
 env $(for var in "${!placeholders[@]}"; do echo "$var=${placeholders[$var]}"; done) \
@@ -50,6 +51,7 @@ kustomizations=$(kustomize build . | yq -o=json -I=0 '
   | {"name": .metadata.name,
      "path": (.spec.path | sub("^\./kubernetes"; ".")),
      "settings": ([.spec.postBuild.substituteFrom[]? | select(.name == "cluster-settings")] | length > 0),
+     "flags": ([.spec.postBuild.substituteFrom[]? | select(.name == "cluster-flags")] | length > 0),
      "values": (.spec.postBuild.substitute // {})}')
 paths=$(jq -r .path <<<"$kustomizations")
 
@@ -62,7 +64,7 @@ find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
 done
 
 # Flux leaves a missing value empty, so each ${VAR} must come from the Kustomization's
-# own substitute or, if it uses them, the settings.
+# own substitute or, if it uses them, the flags or settings.
 while IFS= read -r ks; do
   name=$(jq -r .name <<<"$ks")
   path=$(jq -r .path <<<"$ks")
@@ -71,6 +73,8 @@ while IFS= read -r ks; do
   env=()
   for var in $(grep -oE '\$\{[A-Z0-9_]+\}' <<<"$build" | tr -d '${}' | sort -u); do
     if value=$(jq -er --arg var "$var" '.values[$var] // empty' <<<"$ks"); then
+      env+=("$var=$value")
+    elif [[ $(jq -r .flags <<<"$ks") == true ]] && value=$(jq -er --arg var "$var" '.[$var] // empty' <<<"$flags"); then
       env+=("$var=$value")
     elif [[ $(jq -r .settings <<<"$ks") == true ]] && grep -qxF "$var" <<<"$settings"; then
       [[ -v placeholders[$var] ]] || { echo "no placeholder for \${$var} in validate.sh" >&2; exit 1; }
