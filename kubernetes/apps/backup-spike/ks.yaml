@@ -1,4 +1,4 @@
-# Throwaway: proves VolSync backs up and restores a LINSTOR volume to the NAS (#162).
+# Throwaway: proves the VolSync component backs up and restores a LINSTOR volume (#162, #163).
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -15,62 +15,17 @@ spec:
     name: flux-system
   dependsOn:
   - name: piraeus-config
----
-# Separate so the first backup only starts once the writer Job has completed.
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: backup-spike-backup
-  namespace: flux-system
-spec:
-  interval: 10m
-  path: ./kubernetes/apps/backup-spike/backup
-  prune: true
-  wait: true
-  timeout: 10m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  dependsOn:
-  - name: backup-spike
+  - name: settings
   - name: volsync
   decryption:
     provider: sops
     secretRef:
       name: sops-age
----
-# Restores the backup into a new PVC, to compare against the original.
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: backup-spike-restore
-  namespace: flux-system
-spec:
-  interval: 10m
-  path: ./kubernetes/apps/backup-spike/restore
-  prune: true
-  wait: true
-  timeout: 10m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  dependsOn:
-  - name: backup-spike-backup
----
-# Added once the restore had finished, as only one node can use a DRBD volume at a time.
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: backup-spike-verify
-  namespace: flux-system
-spec:
-  interval: 10m
-  path: ./kubernetes/apps/backup-spike/verify
-  prune: true
-  wait: true
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  dependsOn:
-  - name: backup-spike-restore
+  postBuild:
+    substitute:
+      APP: backup-spike
+      VOLSYNC_CLAIM: data
+      VOLSYNC_CAPACITY: 2Gi
+    substituteFrom:
+    - kind: ConfigMap
+      name: cluster-flags
