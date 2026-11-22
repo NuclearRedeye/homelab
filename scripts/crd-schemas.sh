@@ -56,6 +56,7 @@ helm_crds() {
 # Reads the CRD files at each GitRepository's pinned tag, from the path its
 # Flux Kustomization applies (Gateway API, snapshot CRDs).
 git_crds() {
+  # shellcheck disable=SC2013 # paths have no spaces; a read loop would share stdin with git
   for ks in $(grep -rl --include=ks.yaml 'kind: GitRepository' apps); do
     for name in $(yq 'select(.kind == "GitRepository") | .metadata.name' "$ks"); do
       local source url tag path clone="$work/git-$name"
