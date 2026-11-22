@@ -54,6 +54,9 @@ namespace=$service claim=$volume
 rs_name=$claim-$source
 rs=$(kubectl -n "$namespace" get replicationsource "$rs_name" -o json) \
   || { echo "no ReplicationSource $namespace/$rs_name; is $source set up for $service?" >&2; exit 1; }
+# Every target's ReplicationSource for this volume, so none backs up mid-restore.
+sources=$(kubectl -n "$namespace" get replicationsources -o json \
+  | jq -r --arg claim "$claim" '.items[] | select(.spec.sourcePVC == $claim) | "replicationsource/" + .metadata.name')
 
 cat <<EOF
 Service:        $service (Flux Kustomization $kustomization)
@@ -66,10 +69,11 @@ EOF
 read -r -p "Continue? [y/N] " answer </dev/tty
 [[ $answer == [yY] ]] || { echo "Nothing changed"; exit 1; }
 
-echo "Suspending $kustomization and pausing $rs_name"
+echo "Suspending $kustomization and pausing its backups"
 flux suspend kustomization "$kustomization"
 trap 'echo "stopped with $kustomization suspended; when done: flux resume kustomization $kustomization" >&2' EXIT
-kubectl -n "$namespace" patch replicationsource "$rs_name" --type merge -p '{"spec":{"paused":true}}'
+# shellcheck disable=SC2086 # one word per ReplicationSource
+kubectl -n "$namespace" patch $sources --type merge -p '{"spec":{"paused":true}}'
 
 # Scale down whatever is running with the volume mounted; a restore needs it to itself.
 pods=$(kubectl -n "$namespace" get pods -o json | jq -c --arg claim "$claim" '
@@ -127,6 +131,11 @@ if [[ $result != Successful ]]; then
 fi
 kubectl -n "$namespace" get replicationdestination "$claim-restore" -o jsonpath='{.status.latestMoverStatus.logs}{"\n"}'
 kubectl -n "$namespace" delete replicationdestination "$claim-restore"
+
+# A paused ReplicationSource keeps the clone it took when created, so Flux recreates
+# them to clone the restored data rather than what was there before.
+# shellcheck disable=SC2086 # one word per ReplicationSource
+kubectl -n "$namespace" delete $sources --wait
 
 # Flux puts back the replica counts and spec.paused from Git.
 echo "Resuming $kustomization"
