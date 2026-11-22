@@ -1,0 +1,34 @@
+# A volume is created only if it says whether it's backed up (BAK-001).
+# Create only: the PV binder updates VolSync's own PVCs, which don't say.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: require-pvc-backup
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [""]
+      apiVersions: ["v1"]
+      operations: ["CREATE"]
+      resources: ["persistentvolumeclaims"]
+  matchConditions:
+  # Clones, caches and restore volumes, which back up nothing themselves.
+  - name: not-volsync
+    expression: request.userInfo.username != 'system:serviceaccount:volsync:volsync'
+  validations:
+  - expression: >-
+      has(object.metadata.annotations) &&
+      'homelab/backup' in object.metadata.annotations &&
+      object.metadata.annotations['homelab/backup'] in ['true', 'false']
+    message: >-
+      Back up the volume with kubernetes/components/volsync, or annotate it
+      homelab/backup=false.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: require-pvc-backup
+spec:
+  policyName: require-pvc-backup
+  validationActions: [Deny]

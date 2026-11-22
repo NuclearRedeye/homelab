@@ -2,9 +2,9 @@
 
 How the persistent data of services defined and managed in this repo is backed up and proven restorable, wherever they run. Hosts and the cluster are rebuilt from this repo, so only service data is backed up. Anything else needed to recover is kept outside the system and documented.
 
-## BAK-001 Back up by default
-The backup system shall back up the persistent data of every service defined in this repo, unless the service opts out with a reason.
-- Verify: a new service with no backup config gets backed up, on a host or in the cluster; one that opts out without a reason fails the repo checks.
+## BAK-001 Back up unless opted out
+The backup system shall back up the persistent data of every service defined in this repo, unless the service explicitly opts out.
+- Verify: a new service with no backup config is rejected, on a host or in the cluster; one that explicitly opts out is not backed up.
 - Status: proposed
 
 ## BAK-002 Copies
