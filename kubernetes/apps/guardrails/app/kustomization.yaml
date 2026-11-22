@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
 - protect-flux-system.yaml
 - require-forward-auth.yaml
+- require-pvc-backup.yaml

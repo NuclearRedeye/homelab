@@ -6,6 +6,7 @@ metadata:
   namespace: ${APP}
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
+    homelab/backup: "true"
 spec:
   accessModes:
   - ${VOLSYNC_ACCESSMODE:=ReadWriteOnce}
