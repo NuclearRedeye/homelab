@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - volsync-nas.sops.yaml
+- volsync-cloud.sops.yaml
 - writer.yaml
 components:
 - ../../../components/volsync
