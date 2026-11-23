@@ -31,3 +31,37 @@ spec:
       volumeSource:
         secret:
           secretName: ${VOLSYNC_CLAIM:=${APP}}-volsync-nas-ssh
+---
+# Staggered an hour after nas so a failure at one target doesn't affect the other.
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: ${VOLSYNC_CLAIM:=${APP}}-cloud
+  namespace: ${APP}
+spec:
+  sourcePVC: ${VOLSYNC_CLAIM:=${APP}}
+  paused: ${VOLSYNC_PAUSED}
+  trigger:
+    schedule: "0 2 * * *"
+  restic:
+    repository: ${VOLSYNC_CLAIM:=${APP}}-volsync-cloud
+    copyMethod: Clone
+    storageClassName: linstor-volsync
+    cacheStorageClassName: linstor-volsync
+    cacheCapacity: ${VOLSYNC_CACHE_CAPACITY:=1Gi}
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 6
+    moverSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    moverVolumes:
+    - mountPath: volsync-cloud
+      volumeSource:
+        secret:
+          secretName: ${VOLSYNC_CLAIM:=${APP}}-volsync-cloud-ssh
