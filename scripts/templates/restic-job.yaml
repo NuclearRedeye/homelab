@@ -1,0 +1,24 @@
+# One-off restic run against a VolSync repository, created by run_restic in
+# scripts/libs/volsync.sh. It fills in the name, namespace, image, restic's
+# arguments, and the ReplicationSource's Secret, volumes and security context.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: restic-
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  # Backstop in case the script is killed before it deletes the Job.
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: restic
+        image: quay.io/backube/volsync
+        # Read-only runs: no cache volume, and no lock to block a running backup.
+        command: [restic, --no-cache, --no-lock]
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]

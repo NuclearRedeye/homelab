@@ -94,3 +94,9 @@ while IFS= read -r ks; do
     env "${env[@]}" flux envsubst --strict <<<"$build" | validate
   fi
 done <<<"$kustomizations"
+
+# Templates the scripts fill in at run time.
+for template in ../scripts/templates/*.yaml; do
+  echo "Validating $template"
+  validate <"$template"
+done

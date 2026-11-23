@@ -70,30 +70,21 @@ run_restic() (
     [.items[].spec.template.spec.containers[].args[]? | select(startswith("--restic-container-image="))
      | ltrimstr("--restic-container-image=")] | first') \
     || { echo "couldn't find VolSync's restic image" >&2; exit 1; }
-  job=$(kubectl -n "$namespace" get replicationsource "$rs" -o json | jq --arg image "$image" --args '{
-    apiVersion: "batch/v1",
-    kind: "Job",
-    metadata: {generateName: (.metadata.name + "-restic-"), namespace: .metadata.namespace},
-    spec: {
-      backoffLimit: 0,
-      activeDeadlineSeconds: 600,
-      # Backstop in case the script is killed before it deletes the Job.
-      ttlSecondsAfterFinished: 600,
-      template: {spec: {
-        restartPolicy: "Never",
-        securityContext: .spec.restic.moverSecurityContext,
-        containers: [{
-          name: "restic",
-          image: $image,
-          command: (["restic", "--no-cache", "--no-lock"] + $ARGS.positional),
-          envFrom: [{secretRef: {name: .spec.restic.repository}}],
-          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}},
-          volumeMounts: [.spec.restic.moverVolumes // [] | to_entries[] | {name: "v\(.key)", mountPath: "/mnt/\(.value.mountPath)"}]
-        }],
-        volumes: [.spec.restic.moverVolumes // [] | to_entries[] | {name: "v\(.key)"} + .value.volumeSource]
-      }}
-    }
-  } | del(.. | nulls)' -- "$@" | kubectl create -f - -o name)
+  job=$(kubectl -n "$namespace" get replicationsource "$rs" -o json | jq \
+    --argjson job "$(yq -o json "$(dirname "${BASH_SOURCE[0]}")/../templates/restic-job.yaml")" \
+    --arg image "$image" --args '
+    . as $rs | .spec.restic as $mover | ($mover.moverVolumes // [] | to_entries) as $volumes
+    | $job
+    | .metadata += {generateName: ($rs.metadata.name + "-restic-"), namespace: $rs.metadata.namespace}
+    | .spec.template.spec.securityContext = $mover.moverSecurityContext
+    | .spec.template.spec.volumes = [$volumes[] | {name: "v\(.key)"} + .value.volumeSource]
+    | .spec.template.spec.containers[0] |= (
+        .image = $image
+        | .command += $ARGS.positional
+        | .envFrom = [{secretRef: {name: $mover.repository}}]
+        # Where VolSync mounts moverVolumes, so paths in the Secret work the same.
+        | .volumeMounts = [$volumes[] | {name: "v\(.key)", mountPath: "/mnt/\(.value.mountPath)"}])
+    | del(.. | nulls)' -- "$@" | kubectl create -f - -o name)
   trap 'kubectl -n "$namespace" delete "$job" --wait=false >/dev/null' EXIT
   # Polls, as kubectl wait can't wait for either of two conditions.
   while :; do
