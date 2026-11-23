@@ -58,3 +58,53 @@ stop_claim_users() {
     kubectl -n "$namespace" wait --for=delete "pod/$pod" --timeout=10m
   done
 }
+
+# Runs restic in a one-off Job against the ReplicationSource's repository, and prints its output.
+# The Job mirrors the mover's Secret, volumes and security context, so credentials stay in the cluster.
+#   run_restic NAMESPACE REPLICATIONSOURCE RESTIC_ARGS...
+run_restic() (
+  local namespace=$1 rs=$2 image job conditions
+  shift 2
+  # Same image as VolSync's movers, so restic and rclone match the nightly backups.
+  image=$(kubectl -n volsync get deployments -o json | jq -er '
+    [.items[].spec.template.spec.containers[].args[]? | select(startswith("--restic-container-image="))
+     | ltrimstr("--restic-container-image=")] | first') \
+    || { echo "couldn't find VolSync's restic image" >&2; exit 1; }
+  job=$(kubectl -n "$namespace" get replicationsource "$rs" -o json | jq --arg image "$image" --args '{
+    apiVersion: "batch/v1",
+    kind: "Job",
+    metadata: {generateName: (.metadata.name + "-restic-"), namespace: .metadata.namespace},
+    spec: {
+      backoffLimit: 0,
+      activeDeadlineSeconds: 600,
+      # Backstop in case the script is killed before it deletes the Job.
+      ttlSecondsAfterFinished: 600,
+      template: {spec: {
+        restartPolicy: "Never",
+        securityContext: .spec.restic.moverSecurityContext,
+        containers: [{
+          name: "restic",
+          image: $image,
+          command: (["restic", "--no-cache", "--no-lock"] + $ARGS.positional),
+          envFrom: [{secretRef: {name: .spec.restic.repository}}],
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}},
+          volumeMounts: [.spec.restic.moverVolumes // [] | to_entries[] | {name: "v\(.key)", mountPath: "/mnt/\(.value.mountPath)"}]
+        }],
+        volumes: [.spec.restic.moverVolumes // [] | to_entries[] | {name: "v\(.key)"} + .value.volumeSource]
+      }}
+    }
+  } | del(.. | nulls)' -- "$@" | kubectl create -f - -o name)
+  trap 'kubectl -n "$namespace" delete "$job" --wait=false >/dev/null' EXIT
+  # Polls, as kubectl wait can't wait for either of two conditions.
+  while :; do
+    conditions=$(kubectl -n "$namespace" get "$job" -o jsonpath='{.status.conditions[?(@.status=="True")].type}')
+    case " $conditions " in
+      *" Complete "*) kubectl -n "$namespace" logs "$job"; break ;;
+      *" Failed "*)
+        kubectl -n "$namespace" logs "$job" >&2 || true
+        echo "restic $* failed against $namespace/$rs's repository" >&2
+        exit 1 ;;
+    esac
+    sleep 2
+  done
+)
