@@ -25,11 +25,20 @@ find_volume() {
     || { echo "$service has no backed-up volume $volume" >&2; exit 1; }
 }
 
-# Prints every target's ReplicationSource for the claim, one replicationsource/NAME per line.
-#   replication_sources NAMESPACE CLAIM
+# Prints the claim's ReplicationSource for the target, or every target's, one replicationsource/NAME per line.
+#   replication_sources NAMESPACE CLAIM [TARGET]
 replication_sources() {
-  kubectl -n "$1" get replicationsources -o json \
-    | jq -r --arg claim "$2" '.items[] | select(.spec.sourcePVC == $claim) | "replicationsource/" + .metadata.name'
+  local namespace=$1 claim=$2 target=${3:-} sources
+  if [[ -n $target ]]; then
+    kubectl -n "$namespace" get "replicationsource/$claim-$target" >/dev/null \
+      || { echo "no ReplicationSource $namespace/$claim-$target; is $target set up for $namespace?" >&2; exit 1; }
+    echo "replicationsource/$claim-$target"
+    return
+  fi
+  sources=$(kubectl -n "$namespace" get replicationsources -o json \
+    | jq -r --arg claim "$claim" '.items[] | select(.spec.sourcePVC == $claim) | "replicationsource/" + .metadata.name')
+  [[ -n $sources ]] || { echo "$claim has no ReplicationSources" >&2; exit 1; }
+  echo "$sources"
 }
 
 # Scales down whatever is running with the claim mounted, and waits for its pods to go.

@@ -55,14 +55,7 @@ find_volume "$service" "$volume"
 namespace=$service claim=$volume
 
 if $list; then
-  if [[ -n $source ]]; then
-    sources=replicationsource/$claim-$source
-    kubectl -n "$namespace" get "$sources" >/dev/null \
-      || { echo "no ReplicationSource $namespace/$claim-$source; is $source set up for $service?" >&2; exit 1; }
-  else
-    sources=$(replication_sources "$namespace" "$claim")
-    [[ -n $sources ]] || { echo "$claim has no ReplicationSources" >&2; exit 1; }
-  fi
+  sources=$(replication_sources "$namespace" "$claim" "$source")
   # One table across sources, newest first; a time from it is a --restore-point for that source.
   for rs in $sources; do
     rs=${rs#replicationsource/}
