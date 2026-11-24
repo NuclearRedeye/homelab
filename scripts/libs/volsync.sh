@@ -63,8 +63,10 @@ stop_claim_users() {
 # The Job mirrors the mover's Secret, volumes and security context, so credentials stay in the cluster.
 #   run_restic NAMESPACE REPLICATIONSOURCE RESTIC_ARGS...
 run_restic() (
-  local namespace=$1 rs=$2 rs_json image job conditions logs
+  local namespace=$1 rs=$2 rs_json image job conditions logs lock
   shift 2
+  # Reads skip the lock so they don't block a backup; writes must take it, and forget refuses --no-lock.
+  case $1 in snapshots | ls | stats | cat | find | diff) lock=(--no-lock) ;; *) lock=() ;; esac
   rs_json=$(kubectl -n "$namespace" get replicationsource "$rs" -o json)
   # Same image as VolSync's movers, so restic and rclone match the nightly backups.
   image=$(kubectl -n volsync get deployments -o json | jq -er '
@@ -74,7 +76,7 @@ run_restic() (
   # shellcheck disable=SC2016 # $mover and $volumes are yq variables, nothing to expand
   job=$(APP=$namespace REPLICATION_SOURCE=$rs RESTIC_IMAGE=$image \
     flux envsubst --strict <"$(dirname "${BASH_SOURCE[0]}")/../../kubernetes/components/volsync/templates/restic-job.yaml" \
-    | rs=$rs_json args=$(jq -nc '$ARGS.positional' --args -- "$@") yq '
+    | rs=$rs_json args=$(jq -nc '$ARGS.positional' --args -- "${lock[@]}" "$@") yq '
         env(rs).spec.restic as $mover | ($mover.moverVolumes // []) as $volumes
         | .spec.template.spec.securityContext = $mover.moverSecurityContext
         | .spec.template.spec.volumes = [$volumes[] | {"name": .mountPath} + .volumeSource]
