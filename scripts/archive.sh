@@ -39,14 +39,7 @@ done
 
 find_volume "$service" "$volume"
 namespace=$service claim=$volume
-if [[ -n $target ]]; then
-  sources=replicationsource/$claim-$target
-  kubectl -n "$namespace" get "$sources" >/dev/null \
-    || { echo "no ReplicationSource $namespace/$claim-$target; is $target set up for $service?" >&2; exit 1; }
-else
-  sources=$(replication_sources "$namespace" "$claim")
-  [[ -n $sources ]] || { echo "$claim has no ReplicationSources" >&2; exit 1; }
-fi
+sources=$(replication_sources "$namespace" "$claim" "$target")
 
 # Finds the archive at every target first, so the prompt shows everything that will go.
 declare -A ids
