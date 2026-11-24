@@ -16,8 +16,8 @@ spec:
       containers:
       - name: restic
         image: ${RESTIC_IMAGE}
-        # No cache volume. Reads skip the lock so they don't block a backup; restic ignores --no-lock for writes.
-        command: [restic, --no-cache, --no-lock]
+        # No cache volume; run_restic adds --no-lock for reads.
+        command: [restic, --no-cache]
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
