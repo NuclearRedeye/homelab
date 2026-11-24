@@ -63,7 +63,7 @@ stop_claim_users() {
 # The Job mirrors the mover's Secret, volumes and security context, so credentials stay in the cluster.
 #   run_restic NAMESPACE REPLICATIONSOURCE RESTIC_ARGS...
 run_restic() (
-  local namespace=$1 rs=$2 rs_json image job conditions
+  local namespace=$1 rs=$2 rs_json image job conditions logs
   shift 2
   rs_json=$(kubectl -n "$namespace" get replicationsource "$rs" -o json)
   # Same image as VolSync's movers, so restic and rclone match the nightly backups.
@@ -91,8 +91,13 @@ run_restic() (
     case " $conditions " in
       *" Complete "*) kubectl -n "$namespace" logs "$job"; break ;;
       *" Failed "*)
-        kubectl -n "$namespace" logs "$job" >&2 || true
+        logs=$(kubectl -n "$namespace" logs "$job" 2>&1) || true
+        echo "$logs" >&2
         echo "restic $* failed against $namespace/$rs's repository" >&2
+        # Writes fail at once rather than wait for the lock.
+        if grep -q 'repository is already locked' <<<"$logs"; then
+          echo "it's locked, probably by a running backup, forget or prune; try again later" >&2
+        fi
         exit 1 ;;
     esac
     sleep 2

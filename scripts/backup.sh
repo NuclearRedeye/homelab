@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 # Backs up a service's volume now, to targets set up by components/volsync.
 #
-# Usage: backup.sh --service NAME [--volume NAME] [--target nas|cloud] [--stop]
+# Usage: backup.sh --service NAME [--volume NAME] [--target nas|cloud] [--stop] [--archive NAME]
 #   --service  the app, as its Flux Kustomization's APP
 #   --volume   the volume to back up; defaults to the service's only one
 #   --target   where to back up to; defaults to every target
 #   --stop     stops the service during the backup, then starts it again
+#   --archive  keeps the backup until deleted by hand, under NAME (lowercase letters, digits and hyphens)
 #
 # Without --stop the backup is crash-consistent, like the nightly ones. Each
 # target's ReplicationSource goes back on its schedule afterwards, even on a failure.
+#
+# An archived backup moves to restic host "archive", which VolSync's retention
+# never prunes, as its forget only looks at host "volsync".
 set -euo pipefail
 
 # shellcheck source=scripts/libs/volsync.sh
@@ -19,7 +23,7 @@ usage() {
   exit 2
 }
 
-service='' volume='' target='' stop=false
+service='' volume='' target='' stop=false archive=''
 while [[ $# -gt 0 ]]; do
   case $1 in
     --help) usage ;;
@@ -30,11 +34,16 @@ while [[ $# -gt 0 ]]; do
     --service) service=$2 ;;
     --volume) volume=$2 ;;
     --target) target=$2 ;;
+    --archive) archive=$2 ;;
     *) echo "unknown option $1" >&2; usage ;;
   esac
   shift 2
 done
 [[ -n $service ]] || { echo "--service is required" >&2; usage; }
+if [[ -n $archive && ! $archive =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+  echo "--archive must be lowercase letters, digits and hyphens, such as before-update" >&2
+  exit 2
+fi
 
 find_volume "$service" "$volume"
 namespace=$service claim=$volume
@@ -60,6 +69,20 @@ for rs in $sources; do
   fi
 done
 
+# Checks every target first, so a taken name doesn't leave some archived and some not.
+if [[ -n $archive ]]; then
+  for rs in $sources; do
+    # rclone can log to stderr too, which shares the pod log; restic prints the JSON as one line.
+    count=$(run_restic "$namespace" "${rs#replicationsource/}" snapshots --json --host archive --tag "$archive" \
+      | grep '^\[' | tail -n 1 | jq length)
+    if [[ $count != 0 ]]; then
+      echo "$claim already has an archive named $archive at ${rs#replicationsource/"$claim"-}; choose another name" >&2
+      exit 1
+    fi
+  done
+fi
+archived=()
+
 # Flux reverts fields set by kubectl's own field managers, so the trigger needs another.
 trigger_manager=backup-sh
 
@@ -69,6 +92,9 @@ finish() {
     kubectl -n "$namespace" patch "$rs" --field-manager="$trigger_manager" --type merge -p '{"spec":{"trigger":{"manual":null}}}' >/dev/null \
       || echo "couldn't clear $rs's manual trigger; remove spec.trigger.manual by hand" >&2
   done
+  if [[ -n $archive && ${#archived[@]} -lt $(wc -w <<<"$sources") ]]; then
+    echo "archived as $archive at: ${archived[*]:-none}; rerun with --target for the rest" >&2
+  fi
   if $stop; then
     # Flux puts back the replica counts from Git.
     echo "Resuming $kustomization"
@@ -112,4 +138,11 @@ for rs in $sources; do
   jq -r '.status.latestMoverStatus.logs' <<<"$status"
   # Any restore point at or after this time picks up the backup.
   echo "Backed up at $(jq -r '.status.lastSyncTime' <<<"$status")"
+  if [[ -n $archive ]]; then
+    # Names the backup just taken, then moves it out of retention; a named one left on host volsync just ages out.
+    run_restic "$namespace" "${rs#replicationsource/}" tag --add "$archive" --host volsync latest >/dev/null
+    run_restic "$namespace" "${rs#replicationsource/}" rewrite --new-host archive --forget --host volsync --tag "$archive" latest >/dev/null
+    archived+=("${rs#replicationsource/"$claim"-}")
+    echo "Archived as $archive"
+  fi
 done
