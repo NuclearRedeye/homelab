@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # Restores a service's volume, backed up by components/volsync, replacing its contents.
 #
-# Usage: restore.sh --service NAME [--volume NAME] [--source nas|cloud] [--restore-point TIME]
+# Usage: restore.sh --service NAME [--volume NAME] [--source nas|cloud] [--restore-point TIME | --archive NAME]
 #        restore.sh --service NAME [--volume NAME] [--source nas|cloud] --list
 #   --service        the app, as its Flux Kustomization's APP
 #   --volume         the volume to restore; defaults to the service's only one
 #   --source         where to restore from; defaults to nas, or every source with --list
 #   --restore-point  RFC 3339 time, e.g. 2026-11-22T16:00:00Z; defaults to the latest backup
-#   --list           lists the backups to choose a restore point from, changing nothing
+#   --archive        restores the backup archived under NAME by backup.sh --archive
+#   --list           lists the backups and archives to choose from, changing nothing
 #
 # Asks before stopping the service, restores the newest backup at or before the
 # restore point, then hands the service back to Flux. On a failure it stops with
@@ -22,7 +23,7 @@ usage() {
   exit 2
 }
 
-service='' volume='' source='' restore_point='' list=false
+service='' volume='' source='' restore_point='' archive='' list=false
 while [[ $# -gt 0 ]]; do
   case $1 in
     --help) usage ;;
@@ -34,6 +35,7 @@ while [[ $# -gt 0 ]]; do
     --volume) volume=$2 ;;
     --source) source=$2 ;;
     --restore-point) restore_point=$2 ;;
+    --archive) archive=$2 ;;
     *) echo "unknown option $1" >&2; usage ;;
   esac
   shift 2
@@ -43,6 +45,11 @@ if [[ -n $restore_point && ! $restore_point =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:
   echo "--restore-point must be RFC 3339, such as 2026-11-22T16:00:00Z" >&2
   exit 2
 fi
+[[ -z $restore_point || -z $archive ]] || { echo "choose --restore-point or --archive, not both" >&2; exit 2; }
+
+# To the second in UTC, as --restore-point takes it; the restore also ignores fractions.
+# shellcheck disable=SC2016 # $time is a jq variable, nothing to expand
+restore_time='def restore_time: sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | . as $time | try (fromdate | todate) catch $time;'
 
 find_volume "$service" "$volume"
 namespace=$service claim=$volume
@@ -60,16 +67,16 @@ if $list; then
   for rs in $sources; do
     rs=${rs#replicationsource/}
     # rclone can log to stderr too, which shares the pod log; restic prints the JSON as one line.
-    run_restic "$namespace" "$rs" snapshots --json --host volsync | grep '^\[' | tail -n 1 \
-      | jq -r --arg source "${rs#"$claim"-}" '
+    run_restic "$namespace" "$rs" snapshots --json | grep '^\[' | tail -n 1 \
+      | jq -r --arg source "${rs#"$claim"-}" "$restore_time"'
         def size: if . == null then "-" elif . >= 1073741824 then "\(. / 1073741824 * 10 | round / 10) GiB"
           else "\(. / 1048576 | round) MiB" end;
         .[]
-        # To the second in UTC, as --restore-point takes it; the restore also ignores fractions.
-        | [(.time | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | . as $time | try (fromdate | todate) catch $time),
-           $source, .short_id, (.summary.total_bytes_processed | size)]
+        | [(.time | restore_time), $source, .short_id, (.summary.total_bytes_processed | size),
+           # Only archives have names; backup.sh --archive moves them to host archive.
+           (if .hostname == "archive" then .tags // [] | join(",") else "" end)]
         | @tsv'
-  done | sort -r | { printf 'TIME\tSOURCE\tSNAPSHOT\tSIZE\n'; cat; } | column -t -s $'\t'
+  done | sort -r | { printf 'TIME\tSOURCE\tSNAPSHOT\tSIZE\tNAME\n'; cat; } | column -t -s $'\t'
   exit 0
 fi
 
@@ -77,6 +84,12 @@ source=${source:-nas}
 rs_name=$claim-$source
 rs=$(kubectl -n "$namespace" get replicationsource "$rs_name" -o json) \
   || { echo "no ReplicationSource $namespace/$rs_name; is $source set up for $service?" >&2; exit 1; }
+if [[ -n $archive ]]; then
+  # The restore picks the newest backup at or before a time, and nothing else is taken in the archive's second.
+  restore_point=$(run_restic "$namespace" "$rs_name" snapshots --json --host archive --tag "$archive" \
+    | grep '^\[' | tail -n 1 | jq -er "$restore_time"' .[0].time // empty | restore_time') \
+    || { echo "$claim has no archive named $archive at $source; see --list" >&2; exit 1; }
+fi
 # Every target's ReplicationSource for this volume, so none backs up mid-restore.
 sources=$(replication_sources "$namespace" "$claim")
 
@@ -84,7 +97,7 @@ cat <<EOF
 Service:        $service (Flux Kustomization $kustomization)
 Volume:         $claim
 Source:         $source, last backed up $(jq -r '.status.lastSyncTime // "never"' <<<"$rs")
-Restore point:  ${restore_point:-latest backup}
+Restore point:  ${archive:+archive $archive, }${restore_point:-latest backup}
 
 This stops $service and replaces everything on $claim with that backup.
 EOF
