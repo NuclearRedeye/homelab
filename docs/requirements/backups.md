@@ -48,11 +48,16 @@ The restore process for a service to a chosen backup shall take no longer than 4
 - Status: proposed
 
 ## BAK-010 Verified backups
-The backup system shall verify each service's latest backup weekly, or on the service's own schedule, by restoring it and passing a smoke test against a copy of the service.
-- Verify: every service has a passing result from the last 7 days; verifying a backup of empty data fails.
+The backup system shall verify each service's latest backup weekly by restoring it in full and checking the restored data matches what was backed up, and shall check the integrity of every target's backups at least every 14 days.
+- Verify: every service has a passing result from the last 7 days, and every target from the last 14 days; verifying a backup of empty data fails; verifying a backup with a corrupted file fails.
 - Status: proposed
 
 ## BAK-011 Status
 The backup system shall report the time and result of each backup and verification.
 - Verify: the status shows each service's last backup and last verification.
+- Status: proposed
+
+## BAK-012 Smoke-tested
+The backup system shall start a copy of each service from its latest backup, weekly or on the service's own schedule, and pass a smoke test of that service, with no effect outside the copy.
+- Verify: every service has a passing smoke test from its schedule; a copy started from a backup of empty data fails its smoke test.
 - Status: proposed
