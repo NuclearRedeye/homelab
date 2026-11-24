@@ -69,25 +69,13 @@ stop_claim_users "$namespace" "$claim"
 
 # Reuses the ReplicationSource's settings, so a restore matches how the backup was taken.
 trigger=restore-$(date -u +%Y%m%dT%H%M%SZ)
-jq --arg claim "$claim" --arg trigger "$trigger" --arg restore_point "$restore_point" '{
-  apiVersion: "volsync.backube/v1alpha1",
-  kind: "ReplicationDestination",
-  metadata: {name: ($claim + "-restore"), namespace: .metadata.namespace},
-  spec: {
-    trigger: {manual: $trigger},
-    restic: ({
-      repository: .spec.restic.repository,
-      copyMethod: "Direct",
-      destinationPVC: $claim,
-      enableFileDeletion: true,
-      cacheStorageClassName: .spec.restic.cacheStorageClassName,
-      cacheCapacity: .spec.restic.cacheCapacity,
-      cleanupCachePVC: true,
-      moverSecurityContext: .spec.restic.moverSecurityContext,
-      moverVolumes: .spec.restic.moverVolumes
-    } + if $restore_point == "" then {} else {restoreAsOf: $restore_point} end)
-  }
-} | del(.. | nulls)' <<<"$rs" | kubectl apply -f -
+APP=$namespace VOLSYNC_CLAIM=$claim TRIGGER=$trigger \
+  flux envsubst --strict <"$(dirname "$0")/../kubernetes/components/volsync/templates/replicationdestination.yaml" \
+  | rs=$rs restore_point=$restore_point yq '
+      .spec.restic += (env(rs).spec.restic
+        | pick(["repository", "moverVolumes", "moverSecurityContext", "cacheStorageClassName", "cacheCapacity"]))
+      | with(select(strenv(restore_point) != ""); .spec.restic.restoreAsOf = strenv(restore_point))' \
+  | kubectl apply -f -
 
 echo "Restoring $namespace/$claim from $source, ${restore_point:-latest backup}"
 # BAK-009 allows 4 hours for a restore.

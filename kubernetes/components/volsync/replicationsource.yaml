@@ -1,4 +1,5 @@
 # See docs/requirements/backups.md for the schedule (BAK-003) and retention (BAK-004).
+# scripts/restore.sh copies these restic settings into templates/replicationdestination.yaml.
 apiVersion: volsync.backube/v1alpha1
 kind: ReplicationSource
 metadata:

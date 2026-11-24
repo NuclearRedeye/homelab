@@ -1,0 +1,16 @@
+# Applied by scripts/restore.sh, not Flux. The repository, mounts, security context
+# and cache come from the ReplicationSource being restored, so they aren't repeated here.
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationDestination
+metadata:
+  name: ${VOLSYNC_CLAIM}-restore
+  namespace: ${APP}
+spec:
+  trigger:
+    manual: ${TRIGGER}
+  restic:
+    copyMethod: Direct
+    destinationPVC: ${VOLSYNC_CLAIM}
+    # Removes files the backup doesn't have, so the volume matches it exactly.
+    enableFileDeletion: true
+    cleanupCachePVC: true
