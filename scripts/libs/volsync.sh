@@ -41,6 +41,31 @@ replication_sources() {
   echo "$sources"
 }
 
+# jq: a restic snapshot time, to the second in UTC, as restore.sh --restore-point takes it; the restore also ignores fractions.
+# shellcheck disable=SC2016 # $time is a jq variable, nothing to expand
+restore_time='def restore_time: sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | . as $time | try (fromdate | todate) catch $time;'
+
+# Prints the claim's backups and archives at the target, or every target, as one table, newest first.
+# A time from it is a restore.sh --restore-point for that target.
+#   list_backups NAMESPACE CLAIM [TARGET]
+list_backups() {
+  local namespace=$1 claim=$2 target=${3:-} sources rs
+  sources=$(replication_sources "$namespace" "$claim" "$target")
+  for rs in $sources; do
+    rs=${rs#replicationsource/}
+    # rclone can log to stderr too, which shares the pod log; restic prints the JSON as one line.
+    run_restic "$namespace" "$rs" snapshots --json | grep '^\[' | tail -n 1 \
+      | jq -r --arg source "${rs#"$claim"-}" "$restore_time"'
+        def size: if . == null then "-" elif . >= 1073741824 then "\(. / 1073741824 * 10 | round / 10) GiB"
+          else "\(. / 1048576 | round) MiB" end;
+        .[]
+        | [(.time | restore_time), $source, .short_id, (.summary.total_bytes_processed | size),
+           # Only archives have names; backup.sh --archive moves them to host archive.
+           (if .hostname == "archive" then .tags // [] | join(",") else "" end)]
+        | @tsv'
+  done | sort -r | { printf 'TIME\tSOURCE\tSNAPSHOT\tSIZE\tNAME\n'; cat; } | column -t -s $'\t'
+}
+
 # Scales down whatever is running with the claim mounted, and waits for its pods to go.
 # Suspend the Flux Kustomization first, or Flux scales them back up.
 #   stop_claim_users NAMESPACE CLAIM

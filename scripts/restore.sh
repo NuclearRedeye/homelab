@@ -47,29 +47,11 @@ if [[ -n $restore_point && ! $restore_point =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:
 fi
 [[ -z $restore_point || -z $archive ]] || { echo "choose --restore-point or --archive, not both" >&2; exit 2; }
 
-# To the second in UTC, as --restore-point takes it; the restore also ignores fractions.
-# shellcheck disable=SC2016 # $time is a jq variable, nothing to expand
-restore_time='def restore_time: sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | . as $time | try (fromdate | todate) catch $time;'
-
 find_volume "$service" "$volume"
 namespace=$service claim=$volume
 
 if $list; then
-  sources=$(replication_sources "$namespace" "$claim" "$source")
-  # One table across sources, newest first; a time from it is a --restore-point for that source.
-  for rs in $sources; do
-    rs=${rs#replicationsource/}
-    # rclone can log to stderr too, which shares the pod log; restic prints the JSON as one line.
-    run_restic "$namespace" "$rs" snapshots --json | grep '^\[' | tail -n 1 \
-      | jq -r --arg source "${rs#"$claim"-}" "$restore_time"'
-        def size: if . == null then "-" elif . >= 1073741824 then "\(. / 1073741824 * 10 | round / 10) GiB"
-          else "\(. / 1048576 | round) MiB" end;
-        .[]
-        | [(.time | restore_time), $source, .short_id, (.summary.total_bytes_processed | size),
-           # Only archives have names; backup.sh --archive moves them to host archive.
-           (if .hostname == "archive" then .tags // [] | join(",") else "" end)]
-        | @tsv'
-  done | sort -r | { printf 'TIME\tSOURCE\tSNAPSHOT\tSIZE\tNAME\n'; cat; } | column -t -s $'\t'
+  list_backups "$namespace" "$claim" "$source"
   exit 0
 fi
 
