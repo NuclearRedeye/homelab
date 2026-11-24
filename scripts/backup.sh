@@ -2,11 +2,13 @@
 # Backs up a service's volume now, to targets set up by components/volsync.
 #
 # Usage: backup.sh --service NAME [--volume NAME] [--target nas|cloud] [--stop] [--archive NAME]
+#        backup.sh --service NAME [--volume NAME] [--target nas|cloud] --list
 #   --service  the app, as its Flux Kustomization's APP
 #   --volume   the volume to back up; defaults to the service's only one
 #   --target   where to back up to; defaults to every target
 #   --stop     stops the service during the backup, then starts it again
 #   --archive  keeps the backup until deleted by hand, under NAME (lowercase letters, digits and hyphens)
+#   --list     lists the backups and archives at each target, changing nothing
 #
 # Without --stop the backup is crash-consistent, like the nightly ones. Each
 # target's ReplicationSource goes back on its schedule afterwards, even on a failure.
@@ -23,11 +25,12 @@ usage() {
   exit 2
 }
 
-service='' volume='' target='' stop=false archive=''
+service='' volume='' target='' stop=false archive='' list=false
 while [[ $# -gt 0 ]]; do
   case $1 in
     --help) usage ;;
     --stop) stop=true; shift; continue ;;
+    --list) list=true; shift; continue ;;
   esac
   [[ $# -ge 2 ]] || { echo "$1 needs a value" >&2; usage; }
   case $1 in
@@ -40,6 +43,10 @@ while [[ $# -gt 0 ]]; do
   shift 2
 done
 [[ -n $service ]] || { echo "--service is required" >&2; usage; }
+if $list && { $stop || [[ -n $archive ]]; }; then
+  echo "--list changes nothing, so it can't take --stop or --archive" >&2
+  exit 2
+fi
 if [[ -n $archive && ! $archive =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
   echo "--archive must be lowercase letters, digits and hyphens, such as before-update" >&2
   exit 2
@@ -47,6 +54,12 @@ fi
 
 find_volume "$service" "$volume"
 namespace=$service claim=$volume
+
+if $list; then
+  list_backups "$namespace" "$claim" "$target"
+  exit 0
+fi
+
 sources=$(replication_sources "$namespace" "$claim" "$target")
 
 for rs in $sources; do
