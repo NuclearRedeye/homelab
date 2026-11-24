@@ -66,6 +66,15 @@ find . -name kustomization.yaml -print0 | while IFS= read -r -d '' file; do
   kustomize build "$dir" | validate
 done
 
+# Templates the scripts fill in and apply, so a chart upgrade that breaks one fails here.
+find . -path '*/templates/*.yaml' -print0 | while IFS= read -r -d '' template; do
+  echo "Validating $template"
+  env=()
+  # shellcheck disable=SC2016 # strips the literal ${} characters, nothing to expand
+  for var in $(grep -oE '\$\{[A-Z0-9_]+\}' "$template" | tr -d '${}' | sort -u); do env+=("$var=example"); done
+  env "${env[@]}" flux envsubst --strict <"$template" | validate
+done
+
 # Flux leaves a missing value empty, so each ${VAR} must come from the Kustomization's
 # own substitute or, if it uses them, the flags or settings.
 while IFS= read -r ks; do
