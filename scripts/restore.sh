@@ -2,10 +2,12 @@
 # Restores a service's volume, backed up by components/volsync, replacing its contents.
 #
 # Usage: restore.sh --service NAME [--volume NAME] [--source nas|cloud] [--restore-point TIME]
+#        restore.sh --service NAME [--volume NAME] [--source nas|cloud] --list
 #   --service        the app, as its Flux Kustomization's APP
 #   --volume         the volume to restore; defaults to the service's only one
-#   --source         where to restore from; defaults to nas
+#   --source         where to restore from; defaults to nas, or every source with --list
 #   --restore-point  RFC 3339 time, e.g. 2026-11-22T16:00:00Z; defaults to the latest backup
+#   --list           lists the backups to choose a restore point from, changing nothing
 #
 # Asks before stopping the service, restores the newest backup at or before the
 # restore point, then hands the service back to Flux. On a failure it stops with
@@ -20,9 +22,12 @@ usage() {
   exit 2
 }
 
-service='' volume='' source=nas restore_point=''
+service='' volume='' source='' restore_point='' list=false
 while [[ $# -gt 0 ]]; do
-  [[ $1 == --help ]] && usage
+  case $1 in
+    --help) usage ;;
+    --list) list=true; shift; continue ;;
+  esac
   [[ $# -ge 2 ]] || { echo "$1 needs a value" >&2; usage; }
   case $1 in
     --service) service=$2 ;;
@@ -41,6 +46,34 @@ fi
 
 find_volume "$service" "$volume"
 namespace=$service claim=$volume
+
+if $list; then
+  if [[ -n $source ]]; then
+    sources=replicationsource/$claim-$source
+    kubectl -n "$namespace" get "$sources" >/dev/null \
+      || { echo "no ReplicationSource $namespace/$claim-$source; is $source set up for $service?" >&2; exit 1; }
+  else
+    sources=$(replication_sources "$namespace" "$claim")
+    [[ -n $sources ]] || { echo "$claim has no ReplicationSources" >&2; exit 1; }
+  fi
+  # One table across sources, newest first; a time from it is a --restore-point for that source.
+  for rs in $sources; do
+    rs=${rs#replicationsource/}
+    # rclone can log to stderr too, which shares the pod log; restic prints the JSON as one line.
+    run_restic "$namespace" "$rs" snapshots --json --host volsync | grep '^\[' | tail -n 1 \
+      | jq -r --arg source "${rs#"$claim"-}" '
+        def size: if . == null then "-" elif . >= 1073741824 then "\(. / 1073741824 * 10 | round / 10) GiB"
+          else "\(. / 1048576 | round) MiB" end;
+        .[]
+        # To the second in UTC, as --restore-point takes it; the restore also ignores fractions.
+        | [(.time | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z") | . as $time | try (fromdate | todate) catch $time),
+           $source, .short_id, (.summary.total_bytes_processed | size)]
+        | @tsv'
+  done | sort -r | { printf 'TIME\tSOURCE\tSNAPSHOT\tSIZE\n'; cat; } | column -t -s $'\t'
+  exit 0
+fi
+
+source=${source:-nas}
 rs_name=$claim-$source
 rs=$(kubectl -n "$namespace" get replicationsource "$rs_name" -o json) \
   || { echo "no ReplicationSource $namespace/$rs_name; is $source set up for $service?" >&2; exit 1; }

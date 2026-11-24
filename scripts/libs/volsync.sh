@@ -58,3 +58,43 @@ stop_claim_users() {
     kubectl -n "$namespace" wait --for=delete "pod/$pod" --timeout=10m
   done
 }
+
+# Runs restic in a one-off Job against the ReplicationSource's repository, and prints its output.
+# The Job mirrors the mover's Secret, volumes and security context, so credentials stay in the cluster.
+#   run_restic NAMESPACE REPLICATIONSOURCE RESTIC_ARGS...
+run_restic() (
+  local namespace=$1 rs=$2 rs_json image job conditions
+  shift 2
+  rs_json=$(kubectl -n "$namespace" get replicationsource "$rs" -o json)
+  # Same image as VolSync's movers, so restic and rclone match the nightly backups.
+  image=$(kubectl -n volsync get deployments -o json | jq -er '
+    [.items[].spec.template.spec.containers[].args[]? | select(startswith("--restic-container-image="))
+     | ltrimstr("--restic-container-image=")] | first') \
+    || { echo "couldn't find VolSync's restic image" >&2; exit 1; }
+  # shellcheck disable=SC2016 # $mover and $volumes are yq variables, nothing to expand
+  job=$(APP=$namespace REPLICATION_SOURCE=$rs RESTIC_IMAGE=$image \
+    flux envsubst --strict <"$(dirname "${BASH_SOURCE[0]}")/../../kubernetes/components/volsync/templates/restic-job.yaml" \
+    | rs=$rs_json args=$(jq -nc '$ARGS.positional' --args -- "$@") yq '
+        env(rs).spec.restic as $mover | ($mover.moverVolumes // []) as $volumes
+        | .spec.template.spec.securityContext = $mover.moverSecurityContext
+        | .spec.template.spec.volumes = [$volumes[] | {"name": .mountPath} + .volumeSource]
+        | .spec.template.spec.containers[0] |= (
+            .command += env(args)
+            | .envFrom = [{"secretRef": {"name": $mover.repository}}]
+            # Where VolSync mounts moverVolumes, so paths in the Secret work the same.
+            | .volumeMounts = [$volumes[] | {"name": .mountPath, "mountPath": "/mnt/" + .mountPath}])' \
+    | kubectl create -f - -o name)
+  trap 'kubectl -n "$namespace" delete "$job" --wait=false >/dev/null' EXIT
+  # Polls, as kubectl wait can't wait for either of two conditions.
+  while :; do
+    conditions=$(kubectl -n "$namespace" get "$job" -o jsonpath='{.status.conditions[?(@.status=="True")].type}')
+    case " $conditions " in
+      *" Complete "*) kubectl -n "$namespace" logs "$job"; break ;;
+      *" Failed "*)
+        kubectl -n "$namespace" logs "$job" >&2 || true
+        echo "restic $* failed against $namespace/$rs's repository" >&2
+        exit 1 ;;
+    esac
+    sleep 2
+  done
+)
