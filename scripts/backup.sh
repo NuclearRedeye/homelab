@@ -2,13 +2,15 @@
 # Backs up a service's volume now, to targets set up by components/volsync.
 #
 # Usage: backup.sh --service NAME [--volume NAME] [--target nas|cloud] [--stop] [--archive NAME]
-#        backup.sh --service NAME [--volume NAME] [--target nas|cloud] --list
+#        backup.sh --service NAME [--volume NAME] [--target nas|cloud] --list | --check
 #   --service  the app, as its Flux Kustomization's APP
 #   --volume   the volume to back up; defaults to the service's only one
 #   --target   where to back up to; defaults to every target
 #   --stop     stops the service during the backup, then starts it again
 #   --archive  keeps the backup until deleted by hand, under NAME (lowercase letters, digits and hyphens)
 #   --list     lists the backups and archives at each target, changing nothing
+#   --check    checks each target's repository structure, changing nothing; not every file's data.
+#              It locks the repository, which delays a backup that starts meanwhile
 #
 # Without --stop the backup is crash-consistent, like the nightly ones. Each
 # target's ReplicationSource goes back on its schedule afterwards, even on a failure.
@@ -25,12 +27,13 @@ usage() {
   exit 2
 }
 
-service='' volume='' target='' stop=false archive='' list=false
+service='' volume='' target='' stop=false archive='' list=false check=false
 while [[ $# -gt 0 ]]; do
   case $1 in
     --help) usage ;;
     --stop) stop=true; shift; continue ;;
     --list) list=true; shift; continue ;;
+    --check) check=true; shift; continue ;;
   esac
   [[ $# -ge 2 ]] || { echo "$1 needs a value" >&2; usage; }
   case $1 in
@@ -43,8 +46,9 @@ while [[ $# -gt 0 ]]; do
   shift 2
 done
 [[ -n $service ]] || { echo "--service is required" >&2; usage; }
-if $list && { $stop || [[ -n $archive ]]; }; then
-  echo "--list changes nothing, so it can't take --stop or --archive" >&2
+[[ $list == false || $check == false ]] || { echo "choose --list or --check, not both" >&2; exit 2; }
+if { $list || $check; } && { $stop || [[ -n $archive ]]; }; then
+  echo "--list and --check change nothing, so they can't take --stop or --archive" >&2
   exit 2
 fi
 if [[ -n $archive && ! $archive =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
@@ -61,6 +65,15 @@ if $list; then
 fi
 
 sources=$(replication_sources "$namespace" "$claim" "$target")
+
+if $check; then
+  # Stops at the first failure, which run_restic explains.
+  for rs in $sources; do
+    echo "Checking $namespace/$claim at ${rs#replicationsource/"$claim"-}"
+    run_restic "$namespace" "${rs#replicationsource/}" check
+  done
+  exit 0
+fi
 
 for rs in $sources; do
   status=$(kubectl -n "$namespace" get "$rs" -o json)
