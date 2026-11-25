@@ -2,6 +2,7 @@
 # The app sets APP and VOLSYNC_CAPACITY in postBuild.substitute, substitutes from
 # cluster-flags, and provides a ${VOLSYNC_CLAIM}-volsync-<target> Secret per target (nas,
 # cloud) with RESTIC_REPOSITORY, RESTIC_PASSWORD and RCLONE_CONFIG=/mnt/volsync-<target>/rclone.conf.
+# Its workloads set replicas: ${REPLICAS:=1}, so it can be suspended; see docs/runbooks/service-suspension.md.
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 resources:
