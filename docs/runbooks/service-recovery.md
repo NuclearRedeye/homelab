@@ -12,6 +12,7 @@ Restoring a service's volume from a backup, replacing everything on it. The end 
 
 - You want to take or list backups. Use the [service backups](service-backups.md) runbook instead.
 - The whole cluster has been lost. Use the cluster disaster recovery runbook (#222), which links back here for each service.
+- The backup you need is missing at both targets, or the cloud's are damaged. Use the [cloud backup recovery](cloud-backup-recovery.md) runbook first.
 
 ## Before You Start
 
