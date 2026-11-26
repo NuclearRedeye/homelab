@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 {
-  imports = [ ./disko.nix ../../modules/base.nix ../../modules/k3s.nix ../../modules/drbd.nix ];
+  imports = [ ./disko.nix ../../modules/base.nix ../../modules/k3s.nix ../../modules/drbd.nix ../../modules/node-exporter.nix ];
 
   networking.hostName = "swoop";
   networking.useDHCP = lib.mkDefault true;

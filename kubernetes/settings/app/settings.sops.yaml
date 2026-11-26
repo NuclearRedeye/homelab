@@ -10,6 +10,7 @@ stringData:
     JUNKION_DOMAIN: ENC[AES256_GCM,data:Fiwv086mFPBe,iv:qowOjPV8cNq7Y6nlJjJPES4xeljp08VWJ14frEmmp6I=,tag:1h/R4nz9mSRhyhMHCLHDyA==,type:str]
     QUINTESSA_DOMAIN: ENC[AES256_GCM,data:gzuLzqcWD9emVZyf,iv:d+qIpQpcKzsY9PYnNMTKgH2OTqGG1irRT4G+r4s+gic=,tag:IkYZRizQOwL6GVsMXvorww==,type:str]
     API_VIP: ENC[AES256_GCM,data:7T5rLm3cystCteeJvw==,iv:J1pGLSliQ8ogJCw1TklLJ9teQZSvNuOGlD2jHNv8dDo=,tag:9Cj5APxE5XvuzW70OizAAg==,type:str]
+    LAN_DOMAIN: ENC[AES256_GCM,data:iQipVEqPSXCh434Px1o=,iv:DyG0ZATt0MhVSSHZH9IrMWxZ86JRb4iLKvEC+RrB/As=,tag:g/5PbUvuaXc7MRvRT1+Uaw==,type:str]
 sops:
     age:
         - enc: |
@@ -31,6 +32,6 @@ sops:
             -----END AGE ENCRYPTED FILE-----
           recipient: age13e4686a0ynep9aml33c058nyxxjq3grhewa46cw5432neh0yaq4s9rgxlq
     encrypted_regex: ^(data|stringData)$
-    lastmodified: "2026-11-13T19:47:13Z"
-    mac: ENC[AES256_GCM,data:Tmtdku5A4DzhSIcz2zebdQuWrHXIVSLe1mlBY06JRHHH16P1YcpRegfcQ/OQREqhAq9VLwcrVwCZHvHoR/xCPRb7HZIp/+PpfgLyCRQ7aQ3b+y1+uf7O+TkRAppcFiGIl2jOYQypRxZwwr00XghrdeLE0eKAqPfd7XfWaDdCe/w=,iv:7rTecx9+xooo/bpPDe+n8Ur3RhGdZXkn3jp3/8+pcx8=,tag:+5sP90uHOPVatZc531xx4g==,type:str]
+    lastmodified: "2026-11-26T18:01:30Z"
+    mac: ENC[AES256_GCM,data:XwGdgfJ4c0FNCPOu/rfAxmHW5DV4JYjVGXK5d762shgMwQ5dolLo7j0LYEnHJYqoH/eRT4DfHgRCqWWGhV16QlqxyfslTBnI+C8B7joARskW0bB99oxkv9L1vHmaIiq+HBAyJDKA3CDpjxK6h9qeFOLF9s7fcB54xtb1SZOIyHk=,iv:dM2/MkZ0gadcFZYVO2GcQ4ysU3KS8YlkrSWmwq/bNuI=,tag:ORSFx3dgobznZgb8dqEE+Q==,type:str]
     version: 3.13.3
