@@ -25,6 +25,31 @@ creation_rules:
           - *swoop
           - *slag
 
+  # One per k3s node, so a breached node can't read the others' keys.
+  - path_regex: ^secrets/snarl\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *snarl
+
+  - path_regex: ^secrets/swoop\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *swoop
+
+  - path_regex: ^secrets/slag\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *slag
+
+  # The offline telemetry CA's key; only an admin issues certificates.
+  - path_regex: ^secrets/telemetry-ca\.yaml$
+    key_groups:
+      - age:
+          - *admin
+
   # Decrypted in-cluster by Flux. Only data and stringData are encrypted, so
   # diffs still show which Secret and which key changed.
   - path_regex: ^kubernetes/.*\.sops\.yaml$
