@@ -3,6 +3,9 @@
 # cluster-flags, and provides a ${VOLSYNC_CLAIM}-volsync-<target> Secret per target (nas,
 # cloud) with RESTIC_REPOSITORY, RESTIC_PASSWORD and RCLONE_CONFIG=/mnt/volsync-<target>/rclone.conf.
 # Its workloads set replicas: ${REPLICAS:=1}, so it can be suspended; see docs/runbooks/service-suspension.md.
+# The mover runs as the app's user, so restores keep its ownership: set VOLSYNC_UID and
+# VOLSYNC_GID unless the app runs as 1000. An app with root-owned files needs VolSync's
+# privileged movers instead, which its namespace must opt into.
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 resources:
