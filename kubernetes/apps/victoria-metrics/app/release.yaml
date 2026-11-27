@@ -14,6 +14,9 @@ spec:
   # Requests are a first guess; limits are memory only, so CPU spikes don't throttle.
   # TODO(#233): Resize from measured use in the measure phase.
   values:
+    # The default prefix pushes StatefulSet pod labels past the 63-character limit.
+    fullnameOverride: victoria-metrics
+
     # The hosts serve node-exporter themselves; see config/node-exporter-scrape.yaml.
     prometheus-node-exporter:
       enabled: false
