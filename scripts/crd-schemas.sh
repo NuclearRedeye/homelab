@@ -22,8 +22,11 @@ pick() {
 # so CRDs that are templated or switched on by a value come out as deployed.
 helm_crds() {
   for dir in $(grep -rl --include='*.yaml' 'kind: HelmRelease' apps | xargs -n1 dirname | sort -u); do
-    local manifests="$work/manifests.yaml"
-    kustomize build "$dir" | flux envsubst --strict > "$manifests"
+    local manifests="$work/manifests.yaml" values=()
+    # The directory's own Flux Kustomization substitutions, e.g. pinned refs.
+    mapfile -t values < <(yq ea "select(.kind == \"Kustomization\" and .spec.path == \"./kubernetes/$dir\")
+      | .spec.postBuild.substitute // {} | to_entries | .[] | .key + \"=\" + .value" apps/*/ks.yaml)
+    kustomize build "$dir" | env "${values[@]}" flux envsubst --strict > "$manifests"
 
     for name in $(yq 'select(.kind == "HelmRelease") | .metadata.name' "$manifests"); do
       local release namespace chart version
