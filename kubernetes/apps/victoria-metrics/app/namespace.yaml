@@ -1,0 +1,9 @@
+# Nothing here needs host access: node-exporter runs on the hosts (nixos/modules/node-exporter.nix).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: victoria-metrics
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

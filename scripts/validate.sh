@@ -27,6 +27,7 @@ declare -A placeholders=(
   [CYBERTRON_DOMAIN]=example.com
   [JUNKION_DOMAIN]=example.net
   [QUINTESSA_DOMAIN]=example.org
+  [LAN_DOMAIN]=example.lan
 )
 settings=$(sed -nE 's/^[[:space:]]+([A-Z0-9_]+):.*/\1/p' settings/app/settings.sops.yaml)
 flags=$(yq -o=json '.data' settings/app/flags.yaml)

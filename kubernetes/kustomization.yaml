@@ -13,4 +13,5 @@ resources:
 - apps/piraeus/ks.yaml
 - apps/snapshot-crds/ks.yaml
 - apps/traefik/ks.yaml
+- apps/victoria-metrics/ks.yaml
 - apps/volsync/ks.yaml
