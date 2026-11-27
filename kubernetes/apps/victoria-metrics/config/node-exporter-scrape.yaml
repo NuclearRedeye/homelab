@@ -1,0 +1,39 @@
+# Hosts serve node-exporter over mTLS (nixos/modules/node-exporter.nix); vmagent-tls is
+# its client certificate, from scripts/telemetry-cert.sh. The job name keeps the
+# default node rules and dashboards matching.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMStaticScrape
+metadata:
+  name: node-exporter
+  namespace: victoria-metrics
+spec:
+  jobName: node-exporter
+  targetEndpoints:
+  - targets:
+    - slag.${LAN_DOMAIN}:9100
+    - snarl.${LAN_DOMAIN}:9100
+    - swoop.${LAN_DOMAIN}:9100
+    scheme: https
+    tlsConfig:
+      ca:
+        secret:
+          name: vmagent-tls
+          key: ca.crt
+      cert:
+        secret:
+          name: vmagent-tls
+          key: tls.crt
+      keySecret:
+        name: vmagent-tls
+        key: tls.key
+    relabelConfigs:
+    # The short hostname, so dashboards don't show the LAN domain
+    - sourceLabels: [__address__]
+      regex: '([^.]+)\..*'
+      targetLabel: instance
+      replacement: $1
+    metricRelabelConfigs:
+    # Per-pod volume and container mounts; one series each, and they churn
+    - action: drop
+      sourceLabels: [mountpoint]
+      regex: /(var/lib/kubelet/pods|run/k3s/containerd)/.+

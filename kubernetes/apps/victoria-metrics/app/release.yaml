@@ -1,0 +1,200 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-metrics
+  namespace: victoria-metrics
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: victoria-metrics-k8s-stack
+  # The operator's CRDs are in the subchart's crds/; Helm won't update them unless asked.
+  upgrade:
+    crds: CreateReplace
+  # Requests are a first guess; limits are memory only, so CPU spikes don't throttle.
+  # TODO(#233): Resize from measured use in the measure phase.
+  values:
+    # The hosts serve node-exporter themselves; see config/node-exporter-scrape.yaml.
+    prometheus-node-exporter:
+      enabled: false
+
+    # k3s runs these in the k3s process on localhost, so they can't be scraped as pods.
+    kubeControllerManager:
+      enabled: false
+    kubeScheduler:
+      enabled: false
+    kubeEtcd:
+      enabled: false
+
+    # k3s serves one registry on both the kubelet and API server endpoints, so each job
+    # drops the other's families. Lists replace the chart's, so its defaults are repeated.
+    kubelet:
+      vmScrape:
+        spec:
+          metricRelabelConfigs:
+            - action: labeldrop
+              regex: (uid)
+            - action: labeldrop
+              regex: (id|name)
+            - action: drop
+              source_labels: [__name__]
+              regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum|rest_client_request_duration_seconds_count)
+            - action: drop
+              source_labels: [__name__]
+              regex: (apiserver|aggregator|apiextensions|authentication|authenticated|authorization|etcd|field_validation|watch_cache|serviceaccount|pod_security|node_authorizer|kube_apiserver)_.+
+    kubeApiServer:
+      vmScrape:
+        spec:
+          endpoints:
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+              port: https
+              scheme: https
+              tlsConfig:
+                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                serverName: kubernetes
+              metricRelabelConfigs:
+                - action: drop
+                  source_labels: [__name__]
+                  regex: (kubelet|kubeproxy|volume_manager|volume_operation|storage_operation|csi|plugin_manager|reconstruct_volume|force_cleaned|dra)_.+
+
+    victoria-metrics-operator:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      # A pre-delete kubectl Job with cluster-wide RBAC; Flux pruning removes our CRs anyway.
+      crds:
+        cleanup:
+          enabled: false
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits: { memory: 256Mi }
+
+    vmsingle:
+      spec:
+        retentionPeriod: 90d
+        useStrictSecurity: true
+        storage:
+          storageClassName: linstor-replicated
+          resources:
+            requests:
+              storage: 30Gi
+        # History is rebuilt by collecting again; see docs/requirements/telemetry.md.
+        storageMetadata:
+          annotations:
+            homelab/backup: "false"
+        resources:
+          requests: { cpu: 250m, memory: 1Gi }
+          limits: { memory: 2Gi }
+
+    vmagent:
+      spec:
+        useStrictSecurity: true
+        # The dashboards' cluster picker reads this label.
+        externalLabels:
+          cluster: homelab
+        resources:
+          requests: { cpu: 100m, memory: 256Mi }
+          limits: { memory: 512Mi }
+
+    vmalert:
+      spec:
+        useStrictSecurity: true
+        resources:
+          requests: { cpu: 50m, memory: 128Mi }
+          limits: { memory: 256Mi }
+
+    # TODO(#233): Receivers come in the alert delivery phase; until then alerts go nowhere.
+    alertmanager:
+      spec:
+        useStrictSecurity: true
+        resources:
+          requests: { cpu: 25m, memory: 64Mi }
+          limits: { memory: 128Mi }
+
+    kube-state-metrics:
+      resources:
+        requests: { cpu: 25m, memory: 64Mi }
+        limits: { memory: 128Mi }
+
+    grafana:
+      # Runs as root, so restricted rejects it; the volume comes later, owned via fsGroup.
+      initChownData:
+        enabled: false
+      grafana.ini:
+        # Alerts go through vmalert and Alertmanager only (TEL-015).
+        unified_alerting:
+          enabled: false
+      resources:
+        requests: { cpu: 100m, memory: 256Mi }
+        limits: { memory: 512Mi }
+
+    syncJob:
+      podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: [ALL]
+      resources:
+        requests: { cpu: 50m, memory: 64Mi }
+        limits: { memory: 256Mi }
+
+    # Pinned in ks.yaml; the chart's defaults track upstream master.
+    defaultDashboards:
+      sources:
+        victoriametrics-single-node:
+          url: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/${VM_REF}/dashboards/victoriametrics.json
+        victoriametrics-vmagent:
+          url: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/${VM_REF}/dashboards/vmagent.json
+        victoriametrics-vmalert:
+          url: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/${VM_REF}/dashboards/vmalert.json
+        victoriametrics-operator:
+          url: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/${VM_REF}/dashboards/operator.json
+        kubernetes-views-global:
+          url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/${K8S_DASHBOARDS_REF}/dashboards/k8s-views-global.json
+        kubernetes-views-namespaces:
+          url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/${K8S_DASHBOARDS_REF}/dashboards/k8s-views-namespaces.json
+        kubernetes-views-pods:
+          url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/${K8S_DASHBOARDS_REF}/dashboards/k8s-views-pods.json
+        kubernetes-views-nodes:
+          url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/${K8S_DASHBOARDS_REF}/dashboards/k8s-views-nodes.json
+        kubernetes-system-api-server:
+          url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/${K8S_DASHBOARDS_REF}/dashboards/k8s-system-api-server.json
+        kubernetes-system-coredns:
+          url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/${K8S_DASHBOARDS_REF}/dashboards/k8s-system-coredns.json
+        # Tied to the chart's node-exporter by default, which is off here.
+        node-exporter-full:
+          enabled: true
+          url: https://raw.githubusercontent.com/rfmoz/grafana-dashboards/${NODE_DASHBOARD_REF}/prometheus/node-exporter-full.json
+        kube-prometheus:
+          url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/${KUBE_PROMETHEUS_REF}/manifests/grafana-dashboardDefinitions.yaml
+
+    defaultRules:
+      sources:
+        alertmanager:
+          url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/${KUBE_PROMETHEUS_REF}/manifests/alertmanager-prometheusRule.yaml
+        kubernetes-control-plane:
+          url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/${KUBE_PROMETHEUS_REF}/manifests/kubernetesControlPlane-prometheusRule.yaml
+        kubernetes:
+          url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/${KUBE_PROMETHEUS_REF}/manifests/kubePrometheus-prometheusRule.yaml
+        kube-state-metrics:
+          url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/${KUBE_PROMETHEUS_REF}/manifests/kubeStateMetrics-prometheusRule.yaml
+        # Tied to the chart's node-exporter by default, which is off here.
+        node-exporter:
+          enabled: true
+          url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/${KUBE_PROMETHEUS_REF}/manifests/nodeExporter-prometheusRule.yaml
+        vmhealth:
+          url: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/${VM_REF}/deployment/docker/rules/alerts-health.yml
+        vmagent:
+          url: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/${VM_REF}/deployment/docker/rules/alerts-vmagent.yml
+        vmalert:
+          url: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/${VM_REF}/deployment/docker/rules/alerts-vmalert.yml
+        vmsingle:
+          url: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/${VM_REF}/deployment/docker/rules/alerts-single-node.yml
+        vmoperator:
+          url: https://raw.githubusercontent.com/VictoriaMetrics/operator/${VM_OPERATOR_REF}/config/alerting/vmoperator-rules.yaml

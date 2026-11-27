@@ -1,0 +1,59 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: victoria-metrics
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./kubernetes/apps/victoria-metrics/app
+  prune: true
+  wait: true
+  # First install pulls every image and runs the sync job before Helm reports ready.
+  timeout: 15m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  # The sync job fetches dashboards and rules from these repos at install and upgrade,
+  # so each is pinned here rather than tracking upstream master.
+  postBuild:
+    substitute:
+      # Must match the chart's appVersion: VM's rules and dashboards follow its metrics.
+      # renovate: datasource=github-tags depName=VictoriaMetrics/VictoriaMetrics
+      VM_REF: v1.157.0
+      # Must match the bundled operator's appVersion.
+      # renovate: datasource=github-tags depName=VictoriaMetrics/operator
+      VM_OPERATOR_REF: v0.75.2
+      # renovate: datasource=github-tags depName=prometheus-operator/kube-prometheus
+      KUBE_PROMETHEUS_REF: v0.19.0
+      # renovate: datasource=github-tags depName=dotdc/grafana-dashboards-kubernetes
+      K8S_DASHBOARDS_REF: v3.1.0
+      # No tags upstream, so pinned to a master commit.
+      # renovate: datasource=git-refs depName=rfmoz/grafana-dashboards packageName=https://github.com/rfmoz/grafana-dashboards currentValue=master
+      NODE_DASHBOARD_REF: b07d8a90d8fadd112e9ac841b777ee863cda850b
+---
+# Separate from the install so the operator's CRDs exist before the scrape is applied.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: victoria-metrics-config
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./kubernetes/apps/victoria-metrics/config
+  prune: true
+  wait: true
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+  - name: victoria-metrics
+  - name: settings
+  postBuild:
+    substituteFrom:
+    - kind: Secret
+      name: cluster-settings
