@@ -44,7 +44,7 @@ spec:
               regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum|rest_client_request_duration_seconds_count)
             - action: drop
               source_labels: [__name__]
-              regex: (apiserver|aggregator|apiextensions|authentication|authenticated|authorization|etcd|field_validation|watch_cache|serviceaccount|pod_security|node_authorizer|kube_apiserver)_.+
+              regex: (apiserver|aggregator|apiextensions|authentication|authenticated|authorization|etcd|field_validation|watch_cache|serviceaccount|pod_security|node_authorizer|kube_apiserver|scheduler)_.+
     kubeApiServer:
       vmScrape:
         spec:
@@ -59,6 +59,14 @@ spec:
                 - action: drop
                   source_labels: [__name__]
                   regex: (kubelet|kubeproxy|volume_manager|volume_operation|storage_operation|csi|plugin_manager|reconstruct_volume|force_cleaned|dra)_.+
+                # Histograms no pinned rule or dashboard reads; their _sum and _count stay.
+                - action: drop
+                  source_labels: [__name__]
+                  regex: (etcd_request_duration_seconds|apiserver_request_body_size_bytes|apiserver_watch_list_duration_seconds|apiserver_watch_cache_read_wait_seconds|apiserver_response_sizes|apiserver_watch_events_sizes|scheduler_.+)_bucket
+                # The in-between buckets kube-prometheus drops from its own API server scrape.
+                - action: drop
+                  source_labels: [__name__, le]
+                  regex: (apiserver_request|apiserver_request_sli)_duration_seconds_bucket;(0.15|0.25|0.3|0.35|0.4|0.45|0.6|0.7|0.8|0.9|1.25|1.5|1.75|2.5|3|3.5|4.5|6|7|8|9|15|25|30|50)
 
     victoria-metrics-operator:
       securityContext:
