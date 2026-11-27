@@ -3,7 +3,7 @@
 # versions, so a Renovate bump validates against what will actually run.
 #   nix develop -c scripts/crd-schemas.sh <out-dir>
 # Writes <out-dir>/<group>/<kind>_<version>.json. Expects cluster-settings
-# placeholders in the environment, as validate.sh sets them.
+# placeholders and cluster-flags values in the environment, as validate.sh sets them.
 set -euo pipefail
 
 mkdir -p "$1"
