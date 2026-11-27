@@ -17,9 +17,15 @@ spec:
     provider: sops
     secretRef:
       name: sops-age
+  # Grafana's root URL uses the cluster's domain.
+  dependsOn:
+  - name: settings
   # The sync job fetches dashboards and rules from these repos at install and upgrade,
   # so each is pinned here rather than tracking upstream master.
   postBuild:
+    substituteFrom:
+    - kind: Secret
+      name: cluster-settings
     substitute:
       # Must match the chart's appVersion: VM's rules and dashboards follow its metrics.
       # renovate: datasource=github-tags depName=VictoriaMetrics/VictoriaMetrics
