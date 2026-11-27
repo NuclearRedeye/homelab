@@ -20,6 +20,18 @@
     "managerFilePatterns": ["/^kubernetes/.+\\.ya?ml$/"]
   },
 
+  "customManagers": [
+    {
+      "description": "Refs pinned in a Flux Kustomization's postBuild.substitute, marked with a # renovate: comment. The second pattern tracks a branch's commit.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^kubernetes/apps/.+/ks\\.yaml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+[A-Z0-9_]+: (?<currentValue>\\S+)",
+        "# renovate: datasource=(?<datasource>git-refs) depName=(?<depName>\\S+) packageName=(?<packageName>\\S+) currentValue=(?<currentValue>\\S+)\\n\\s+[A-Z0-9_]+: (?<currentDigest>[0-9a-f]{40})"
+      ]
+    }
+  ],
+
   "lockFileMaintenance": {
     "description": "Refreshes flake.lock. nixpkgs tracks nixos-26.05, so these are security backports, and the closure build in CI is a strong signal for them. Merged by hand for now, until the review pattern is established. The schedule override is required: the preset carries a built-in 'before 4am on monday' that otherwise silently suppresses the PR.",
     "enabled": true,
@@ -42,6 +54,16 @@
       "description": "Gateway API CRDs must stay within the Standard version the pinned Traefik supports, listed in its kubernetes-gateway provider docs. Hold bumps until Traefik catches up.",
       "matchDatasources": ["github-tags"],
       "matchPackageNames": ["kubernetes-sigs/gateway-api"],
+      "automerge": false
+    },
+    {
+      "description": "The VictoriaMetrics dashboards and rules must match the versions the chart runs, so they move together. VictoriaMetrics often releases first, so merge only once the group's chart ships the same versions.",
+      "matchPackageNames": [
+        "ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack",
+        "VictoriaMetrics/VictoriaMetrics",
+        "VictoriaMetrics/operator"
+      ],
+      "groupName": "victoria-metrics",
       "automerge": false
     },
     {
