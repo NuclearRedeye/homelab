@@ -5,3 +5,7 @@ resources:
 - repository.yaml
 - release.yaml
 - vmagent-tls.sops.yaml
+- grafana-volsync-nas.sops.yaml
+- grafana-volsync-cloud.sops.yaml
+components:
+- ../../../components/volsync

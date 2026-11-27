@@ -17,16 +17,25 @@ spec:
     provider: sops
     secretRef:
       name: sops-age
-  # Grafana's root URL uses the cluster's domain.
+  # Grafana's root URL uses the cluster's domain, and its volume is backed up.
   dependsOn:
   - name: settings
-  # The sync job fetches dashboards and rules from these repos at install and upgrade,
-  # so each is pinned here rather than tracking upstream master.
+  - name: volsync
   postBuild:
     substituteFrom:
     - kind: Secret
       name: cluster-settings
+    - kind: ConfigMap
+      name: cluster-flags
     substitute:
+      # Grafana's volume, through components/volsync; Grafana runs as 472.
+      APP: victoria-metrics
+      VOLSYNC_CLAIM: grafana
+      VOLSYNC_CAPACITY: 1Gi
+      VOLSYNC_UID: "472"
+      VOLSYNC_GID: "472"
+      # The sync job fetches dashboards and rules from these repos at install and upgrade,
+      # so each is pinned here rather than tracking upstream master.
       # Must match the chart's appVersion: VM's rules and dashboards follow its metrics.
       # renovate: datasource=github-tags depName=VictoriaMetrics/VictoriaMetrics
       VM_REF: v1.157.0
