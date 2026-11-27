@@ -131,7 +131,25 @@ spec:
       # Runs as root, so restricted rejects it; the volume comes later, owned via fsGroup.
       initChownData:
         enabled: false
+      # Only Traefik can reach it (config/grafana-network-policy.yaml), so nothing else scrapes it.
+      vmScrape:
+        enabled: false
       grafana.ini:
+        server:
+          root_url: https://grafana.${CYBERTRON_DOMAIN}
+        # Authelia has already signed you in; the header is trusted as only Traefik can reach Grafana.
+        # TODO(#245): Replace with Authelia OIDC once Authelia is in the cluster.
+        auth:
+          disable_login_form: true
+        auth.proxy:
+          enabled: true
+          header_name: Remote-User
+          header_property: username
+          headers: Email:Remote-Email Name:Remote-Name
+          auto_sign_up: true
+        # The only user is the homelab's admin.
+        users:
+          auto_assign_org_role: Admin
         # Alerts go through vmalert and Alertmanager only (TEL-015).
         unified_alerting:
           enabled: false
