@@ -32,6 +32,19 @@ declare -A placeholders=(
 settings=$(sed -nE 's/^[[:space:]]+([A-Z0-9_]+):.*/\1/p' settings/app/settings.sops.yaml)
 flags=$(yq -o=json '.data' settings/app/flags.yaml)
 
+# The VictoriaMetrics dashboards and rules are pinned to the versions its chart runs.
+echo "Checking VictoriaMetrics refs match its chart"
+vm=apps/victoria-metrics
+helm pull "$(yq '.spec.url' "$vm/app/repository.yaml")" --version "$(yq '.spec.ref.tag' "$vm/app/repository.yaml")" \
+  --untar --untardir "$schemas/vm-chart"
+chart="$schemas/vm-chart/victoria-metrics-k8s-stack"
+refs=$(yq 'select(.metadata.name == "victoria-metrics") | .spec.postBuild.substitute' "$vm/ks.yaml")
+for check in "VM_REF $chart/Chart.yaml" "VM_OPERATOR_REF $chart/charts/victoria-metrics-operator/Chart.yaml"; do
+  read -r var file <<<"$check"
+  want=$(yq '.appVersion' "$file") got=$(yq ".$var" <<<"$refs")
+  [[ $got == "$want" ]] || { echo "$vm/ks.yaml: $var is $got, but the chart runs $want" >&2; exit 1; }
+done
+
 # Schemas for other custom resources, built from the CRDs we deploy (#178).
 placeholder_env=()
 for var in "${!placeholders[@]}"; do placeholder_env+=("$var=${placeholders[$var]}"); done
