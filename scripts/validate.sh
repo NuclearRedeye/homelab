@@ -48,7 +48,8 @@ done
 # Schemas for other custom resources, built from the CRDs we deploy (#178).
 placeholder_env=()
 for var in "${!placeholders[@]}"; do placeholder_env+=("$var=${placeholders[$var]}"); done
-env "${placeholder_env[@]}" ../scripts/crd-schemas.sh "$schemas/crds"
+mapfile -t flag_env < <(jq -r 'to_entries[] | .key + "=" + .value' <<<"$flags")
+env "${placeholder_env[@]}" "${flag_env[@]}" ../scripts/crd-schemas.sh "$schemas/crds"
 
 # Secrets are skipped as their sops metadata fails strict validation, and CRDs
 # as upstream ships them and no schema exists. Unknown kinds still fail.
