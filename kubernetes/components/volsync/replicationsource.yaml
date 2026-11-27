@@ -22,9 +22,9 @@ spec:
       monthly: 6
     moverSecurityContext:
       runAsNonRoot: true
-      runAsUser: 1000
-      runAsGroup: 1000
-      fsGroup: 1000
+      runAsUser: ${VOLSYNC_UID:=1000}
+      runAsGroup: ${VOLSYNC_GID:=1000}
+      fsGroup: ${VOLSYNC_GID:=1000}
       seccompProfile:
         type: RuntimeDefault
     moverVolumes:
@@ -56,9 +56,9 @@ spec:
       monthly: 6
     moverSecurityContext:
       runAsNonRoot: true
-      runAsUser: 1000
-      runAsGroup: 1000
-      fsGroup: 1000
+      runAsUser: ${VOLSYNC_UID:=1000}
+      runAsGroup: ${VOLSYNC_GID:=1000}
+      fsGroup: ${VOLSYNC_GID:=1000}
       seccompProfile:
         type: RuntimeDefault
     moverVolumes:
