@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: grafana-volsync-nas
+    namespace: victoria-metrics
+stringData:
+    RESTIC_REPOSITORY: ENC[AES256_GCM,data:BDIowwD4CPx6TUBdNDpiZozQ1F02Rt/qYW895hfFiRb83fY4MqkBYOBcw5WWhYQ=,iv:3RO72V/SamPjH6g6vo4YNH/Ygdrr2GTpvB3zIarJbUM=,tag:zoHVK0zlASI+LDzjz7+1kQ==,type:str]
+    RESTIC_PASSWORD: ENC[AES256_GCM,data:O7yOBYpr6PDjOY3oLjqfveWqhbeQmxZKq8BSGbPd1sPGmfcq594m363plwM=,iv:NgHSGye+JUEh/1QOlu7CR/Kq7yFlW4z/NLU+rOcPIWc=,tag:wCQ5VBfNdBBhHW21SP8sHw==,type:str]
+    RCLONE_CONFIG: ENC[AES256_GCM,data:y8cdii3uO0eNEb5audL3C1pDfuuDWYRmq2pTjg==,iv:e4i97uOolPsij+aJsSAefI1fxmUfytfKjbYjxh0UzVE=,tag:7IeuGwmr03MubEHMVhegEA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBHQytObVRxMkVFZGE2Q3BY
+            MnR5RTNwRmhnTldRSzgwcFhwK0lBdTZ4azFzCkREVFNoZkN5Y3d1MUI2dU1kS2Jh
+            ZUw1QWxQZTEwdDJCcTdmOHgzaENrUGMKLS0tIDRsYml2TnozUEtCUmdFZTJwUzB2
+            MmJGcENZUWRXVkFSNWdWci93MmY5Y1EKX1XVHhtSdELqFXd8anBKasnyACzUoRI0
+            X9ZF65ElbQlhijtwlDXIKy4QnUhq3Z7/JbS0JKpbZk8vO/A36xuk8A==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age14h7wk9623cjgfvzx7lglztuwfftjmkufgmte88qs3rddmcw9aekqzav60f
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBGYkhSZnhObk9pck5VRjVO
+            YXVxQkJmVFgzNGFPdytVS0FmRFBZOFJrUGlnCkVFWXAyMmlBN0JGZ0d5UGNzQ0FJ
+            STE2NEFRemp4N21ZNloxQnZ3dXN2ODQKLS0tIDYwUDFBd1BpeXI4MW9MNE4xbzNk
+            NTMxdDFoNXFzblZuV2hOVHVrdWRadzAKSm/1Uy/d/UbYlj4Yvjl+439ORD/YNWeC
+            nJI3Pm+qVHFl6lPBplYlqFw/CmKFybRJaodsVV488hILZVjuMZPesA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age13e4686a0ynep9aml33c058nyxxjq3grhewa46cw5432neh0yaq4s9rgxlq
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-27T19:06:57Z"
+    mac: ENC[AES256_GCM,data:8nFJpTT9z30QnG/y1NFmpOXVjBY6rfXq56px4KO0QB2Ov3TnurpETESDYds0+3oFU/s+LoDl92o7j+Yae7/lmDrcxwPXu4KtD4VW4GQL5uhYeL+u8DVlqnMrOIuJ/fqZ4tuAnjRNnoX5vH+/BE/RLfufNMvsVTMi/VEFYEjnspw=,iv:hVQMKKagvpkqDGSeI3fgOJH0fL0RGyem7D69EsCi2uM=,tag:xNy92NQgS1LGCAeIc31IZw==,type:str]
+    version: 3.13.3

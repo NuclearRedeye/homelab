@@ -128,7 +128,16 @@ spec:
         limits: { memory: 128Mi }
 
     grafana:
-      # Runs as root, so restricted rejects it; the volume comes later, owned via fsGroup.
+      replicas: ${REPLICAS:=1}
+      # The volume is ReadWriteOnce, so the old pod must stop before the new one mounts it.
+      deploymentStrategy:
+        type: Recreate
+      # UI-made dashboards and settings; backed up by components/volsync.
+      # TODO(#246): Drop once Grafana's state lives in Git.
+      persistence:
+        enabled: true
+        existingClaim: grafana
+      # Runs as root, so restricted rejects it; fsGroup gives Grafana the volume instead.
       initChownData:
         enabled: false
       # Only Traefik can reach it (config/grafana-network-policy.yaml), so nothing else scrapes it.
