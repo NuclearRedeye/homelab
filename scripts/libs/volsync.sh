@@ -66,11 +66,14 @@ list_backups() {
   done | sort -r | { printf 'TIME\tSOURCE\tSNAPSHOT\tSIZE\tNAME\n'; cat; } | column -t -s $'\t'
 }
 
+# HelmReleases whose workloads stop_claim_users scaled down, as NAMESPACE/NAME, for resume_service.
+stopped_releases=()
+
 # Scales down whatever is running with the claim mounted, and waits for its pods to go.
-# Suspend the Flux Kustomization first, or Flux scales them back up.
+# Suspend the Flux Kustomization first, or Flux scales them back up; resume_service undoes it.
 #   stop_claim_users NAMESPACE CLAIM
 stop_claim_users() {
-  local namespace=$1 claim=$2 pods owner pod
+  local namespace=$1 claim=$2 pods owner pod release
   pods=$(kubectl -n "$namespace" get pods -o json | jq -c --arg claim "$claim" '
     [.items[] | select(.status.phase == "Running" or .status.phase == "Pending")
      | select(any(.spec.volumes[]?; .persistentVolumeClaim.claimName == $claim))]')
@@ -82,6 +85,9 @@ stop_claim_users() {
     case $owner in
       Deployment/* | StatefulSet/*)
         echo "Scaling down $owner"
+        release=$(kubectl -n "$namespace" get "$owner" \
+          -o jsonpath='{.metadata.labels.helm\.toolkit\.fluxcd\.io/namespace}/{.metadata.labels.helm\.toolkit\.fluxcd\.io/name}')
+        [[ $release == / ]] || stopped_releases+=("$release")
         kubectl -n "$namespace" scale "$owner" --replicas=0 ;;
       *)
         echo "$owner is using $claim; stop it, then run this again" >&2
@@ -90,6 +96,18 @@ stop_claim_users() {
   done
   for pod in $(jq -r '.[].metadata.name' <<<"$pods"); do
     kubectl -n "$namespace" wait --for=delete "pod/$pod" --timeout=10m
+  done
+}
+
+# Resumes the Flux Kustomization, which scales plain workloads back up from Git. helm-controller
+# doesn't undo a scale by itself, so each release stop_claim_users stopped is upgraded again.
+#   resume_service KUSTOMIZATION
+resume_service() {
+  local release
+  echo "Resuming $1"
+  flux resume kustomization "$1"
+  for release in $(printf '%s\n' "${stopped_releases[@]}" | sort -u); do
+    flux reconcile helmrelease -n "${release%/*}" "${release#*/}" --force
   done
 }
 

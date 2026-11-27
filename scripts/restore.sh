@@ -117,6 +117,5 @@ kubectl -n "$namespace" delete replicationdestination "$claim-restore"
 kubectl -n "$namespace" delete $sources --wait
 
 # Flux puts back the replica counts and spec.paused from Git.
-echo "Resuming $kustomization"
 trap - EXIT
-flux resume kustomization "$kustomization"
+resume_service "$kustomization"

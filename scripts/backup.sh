@@ -116,8 +116,7 @@ finish() {
   fi
   if $stop; then
     # Flux puts back the replica counts from Git.
-    echo "Resuming $kustomization"
-    flux resume kustomization "$kustomization"
+    resume_service "$kustomization"
   fi
 }
 
