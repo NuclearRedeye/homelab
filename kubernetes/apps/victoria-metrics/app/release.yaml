@@ -213,6 +213,12 @@ spec:
           url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/${KUBE_PROMETHEUS_REF}/manifests/grafana-dashboardDefinitions.yaml
 
     defaultRules:
+      groups:
+        node.rules:
+          rules:
+            # Joins node-exporter to its pods, which don't exist when it runs on the hosts; nothing reads it.
+            "node:node_num_cpu:sum":
+              enabled: false
       sources:
         alertmanager:
           url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/${KUBE_PROMETHEUS_REF}/manifests/alertmanager-prometheusRule.yaml
